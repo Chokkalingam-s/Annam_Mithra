@@ -1,22 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import api from '../services/api';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { COLORS, SPACING, FONT_SIZES } from '../config/theme';
 
-const Signup = () => {
+const Login = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    confirmPassword: '',
   });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  // Check if user is already logged in on component mount
+  useEffect(() => {
+    const checkAuth = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        await checkAndRedirect(user);
+      }
+    };
+    checkAuth();
+  }, []);
 
   // Check if user has profile and redirect accordingly
   const checkAndRedirect = async (user) => {
@@ -31,24 +41,23 @@ const Signup = () => {
       });
 
       if (response.data.success && response.data.data) {
-        // User already has profile (existing user came to signup page)
+        // User has profile, save to localStorage and go to home
         localStorage.setItem('userProfile', JSON.stringify({
           ...response.data.data,
           profileCompleted: true,
         }));
         navigate('/home');
       } else {
-        // New user, go to profile setup
+        // No profile found, go to profile setup
         navigate('/profile-setup');
       }
     } catch (error) {
-      // If profile doesn't exist (new user), go to profile setup
+      console.error('Profile check error:', error);
+      // If profile doesn't exist (404 or error), go to profile setup
       if (error.response?.status === 404 || !error.response?.data?.data) {
         navigate('/profile-setup');
       } else {
-        console.error('Profile check error:', error);
-        // Default to profile setup on error
-        navigate('/profile-setup');
+        alert('Error checking profile: ' + (error.response?.data?.message || error.message));
       }
     }
   };
@@ -64,42 +73,38 @@ const Signup = () => {
     
     if (!formData.password) {
       newErrors.password = 'Password is required';
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
-    }
-    
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
     }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleEmailSignup = async (e) => {
+  const handleEmailLogin = async (e) => {
     e.preventDefault();
     
     if (!validateForm()) return;
 
     try {
       setLoading(true);
-      await createUserWithEmailAndPassword(
+      const userCredential = await signInWithEmailAndPassword(
         auth, 
         formData.email, 
         formData.password
       );
       
-      // New user created, go to profile setup
-      navigate('/profile-setup');
+      // Check profile and redirect
+      await checkAndRedirect(userCredential.user);
     } catch (error) {
-      let errorMessage = 'Signup failed';
+      let errorMessage = 'Login failed';
       
-      if (error.code === 'auth/email-already-in-use') {
-        errorMessage = 'Email already in use. Please sign in instead.';
+      if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password';
       } else if (error.code === 'auth/invalid-email') {
         errorMessage = 'Invalid email address';
-      } else if (error.code === 'auth/weak-password') {
-        errorMessage = 'Password is too weak';
+      } else if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid credentials. Please check your email and password';
       }
       
       alert(errorMessage);
@@ -108,23 +113,23 @@ const Signup = () => {
     }
   };
 
-  const handleGoogleSignup = async () => {
+  const handleGoogleLogin = async () => {
     try {
       setGoogleLoading(true);
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);
       
-      // Check if user already has profile or is new
+      // Check profile and redirect (works for both new and existing users)
       await checkAndRedirect(result.user);
     } catch (error) {
-      console.error('Google signup error:', error);
+      console.error('Google login error:', error);
       
       if (error.code === 'auth/popup-closed-by-user') {
-        // User closed popup, do nothing
+        // User closed the popup, do nothing
         return;
       }
       
-      alert('Google signup failed: ' + error.message);
+      alert('Google login failed: ' + error.message);
     } finally {
       setGoogleLoading(false);
     }
@@ -133,12 +138,12 @@ const Signup = () => {
   return (
     <div className="page" style={styles.container}>
       <div style={styles.header}>
-        <div style={styles.logoSmall}>🍲</div>
-        <h1 style={styles.title}>Create Account</h1>
-        <p style={styles.subtitle}>Join Annam Mithra community</p>
+        <div style={styles.logo}>🍲</div>
+        <h1 style={styles.title}>Annam Mithra</h1>
+        <p style={styles.subtitle}>Sharing food, spreading kindness</p>
       </div>
 
-      <form onSubmit={handleEmailSignup} style={styles.form}>
+      <form onSubmit={handleEmailLogin} style={styles.form}>
         <Input
           label="Email"
           type="email"
@@ -151,23 +156,14 @@ const Signup = () => {
         <Input
           label="Password"
           type="password"
-          placeholder="Enter password"
+          placeholder="Enter your password"
           value={formData.password}
           onChange={(value) => setFormData({ ...formData, password: value })}
           error={errors.password}
         />
 
-        <Input
-          label="Confirm Password"
-          type="password"
-          placeholder="Confirm password"
-          value={formData.confirmPassword}
-          onChange={(value) => setFormData({ ...formData, confirmPassword: value })}
-          error={errors.confirmPassword}
-        />
-
         <Button type="submit" loading={loading}>
-          Create Account
+          Sign In
         </Button>
 
         <div style={styles.divider}>
@@ -179,20 +175,20 @@ const Signup = () => {
         <button
           type="button"
           style={styles.googleBtn}
-          onClick={handleGoogleSignup}
+          onClick={handleGoogleLogin}
           disabled={googleLoading}
         >
           <span style={styles.googleIcon}>🔐</span>
-          {googleLoading ? 'Signing up...' : 'Continue with Google'}
+          {googleLoading ? 'Signing in...' : 'Continue with Google'}
         </button>
 
         <p style={styles.footerText}>
-          Already have an account?{' '}
+          Don't have an account?{' '}
           <span 
             style={styles.link}
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/signup')}
           >
-            Sign In
+            Sign Up
           </span>
         </p>
       </form>
@@ -214,8 +210,8 @@ const styles = {
     textAlign: 'center',
     marginBottom: '40px',
   },
-  logoSmall: {
-    fontSize: '48px',
+  logo: {
+    fontSize: '64px',
     marginBottom: '16px',
   },
   title: {
@@ -278,4 +274,4 @@ const styles = {
   },
 };
 
-export default Signup;
+export default Login;
