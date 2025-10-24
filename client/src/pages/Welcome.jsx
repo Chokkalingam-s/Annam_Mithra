@@ -32,7 +32,7 @@ const Welcome = () => {
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.logoContainer}>
-          <img src="/logo.png" alt="Logo" style={styles.logo} />
+          <img src="/src/assets/logo.png" alt="Logo" style={styles.logo} />
         </div>
         <h1 style={styles.title}>Annam Mithra</h1>
         <p style={styles.subtitle}>Share Food, Share Love</p>

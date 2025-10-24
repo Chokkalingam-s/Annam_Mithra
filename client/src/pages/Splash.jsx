@@ -32,7 +32,7 @@ const Splash = () => {
         animation: 'scaleIn 0.8s ease-out',
       }}>
         <img 
-          src="/logo.png" 
+          src="/src/assets/logo.png" 
           alt="Annam Mithra" 
           style={{
             width: '100%',
