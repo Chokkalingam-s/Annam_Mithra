@@ -22,7 +22,7 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false
     },
     foodType: {
-      type: Sequelize.ENUM('veg', 'non-veg'),
+      type: Sequelize.ENUM('veg', 'nonveg'),
       allowNull: false
     },
     description: {
@@ -43,6 +43,11 @@ module.exports = (sequelize, Sequelize) => {
     address: {
       type: Sequelize.TEXT,
       allowNull: false
+    },
+    phone: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      comment: 'Contact number for pickup'
     },
     targetReceiverType: {
       type: Sequelize.ENUM('individual', 'ngo', 'both'),

@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { auth } from '../config/firebase';
+import api from '../services/api';
 import { COLORS, FONT_SIZES } from '../config/theme';
 
 const DonateForm = () => {
@@ -7,19 +10,124 @@ const DonateForm = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [foodType, setFoodType] = useState('');
   const [foodItems, setFoodItems] = useState([{ dishName: '', quantity: '' }]);
+  const [foodImage, setFoodImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [locationData, setLocationData] = useState({
+    latitude: null,
+    longitude: null,
     address: '',
-    city: '',
-    pincode: '',
     phone: ''
   });
+  const [map, setMap] = useState(null);
+  const [marker, setMarker] = useState(null);
+  const [searchAddress, setSearchAddress] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Add new food item
+  // Get user's current location on mount
+  useEffect(() => {
+    getCurrentLocation();
+  }, []);
+
+  const getCurrentLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setLocationData(prev => ({
+            ...prev,
+            latitude: lat,
+            longitude: lng
+          }));
+          setMarker({ lat, lng });
+          reverseGeocode(lat, lng);
+        },
+        (error) => {
+          console.error('Error getting location:', error);
+          // Default to a location if geolocation fails
+          setLocationData(prev => ({
+            ...prev,
+            latitude: 17.385044,
+            longitude: 78.486671
+          }));
+          setMarker({ lat: 17.385044, lng: 78.486671 });
+        }
+      );
+    }
+  };
+
+  const reverseGeocode = async (lat, lng) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
+      );
+      const data = await response.json();
+      if (data.results[0]) {
+        setLocationData(prev => ({
+          ...prev,
+          address: data.results[0].formatted_address
+        }));
+        setSearchAddress(data.results[0].formatted_address);
+      }
+    } catch (error) {
+      console.error('Error reverse geocoding:', error);
+    }
+  };
+
+  const searchLocation = async () => {
+    if (!searchAddress.trim()) return;
+
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchAddress)}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
+      );
+      const data = await response.json();
+      if (data.results[0]) {
+        const location = data.results[0].geometry.location;
+        setLocationData(prev => ({
+          ...prev,
+          latitude: location.lat,
+          longitude: location.lng,
+          address: data.results[0].formatted_address
+        }));
+        setMarker({ lat: location.lat, lng: location.lng });
+        if (map) {
+          map.panTo(location);
+        }
+      }
+    } catch (error) {
+      console.error('Error searching location:', error);
+    }
+  };
+
+  const onMapClick = useCallback((e) => {
+    const lat = e.latLng.lat();
+    const lng = e.latLng.lng();
+    setMarker({ lat, lng });
+    setLocationData(prev => ({
+      ...prev,
+      latitude: lat,
+      longitude: lng
+    }));
+    reverseGeocode(lat, lng);
+  }, []);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFoodImage(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const addFoodItem = () => {
     setFoodItems([...foodItems, { dishName: '', quantity: '' }]);
   };
 
-  // Remove food item
   const removeFoodItem = (index) => {
     if (foodItems.length > 1) {
       const newItems = foodItems.filter((_, i) => i !== index);
@@ -27,48 +135,68 @@ const DonateForm = () => {
     }
   };
 
-  // Update food item
   const updateFoodItem = (index, field, value) => {
     const newItems = [...foodItems];
     newItems[index][field] = value;
     setFoodItems(newItems);
   };
 
-  // Validation for step 1
   const isStep1Valid = () => {
     return foodType !== '' && 
            foodItems.every(item => item.dishName.trim() && item.quantity.trim());
   };
 
-  // Validation for step 2
   const isStep2Valid = () => {
-    return locationData.address.trim().length > 0 && 
-           locationData.city.trim().length > 0 && 
-           locationData.pincode.trim().length === 6 && 
+    return locationData.latitude && 
+           locationData.longitude && 
+           locationData.address.trim() && 
            locationData.phone.trim().length === 10;
   };
 
-  // Navigation
   const goToLocationStep = () => {
     if (isStep1Valid()) {
       setCurrentStep(2);
     }
   };
 
-  const submitDonation = () => {
-    if (isStep2Valid()) {
-      const donationData = {
-        foodType,
-        foodItems,
-        ...locationData
-      };
-      console.log('Donation submitted:', donationData);
+  const submitDonation = async () => {
+    if (!isStep2Valid()) return;
+
+    try {
+      setLoading(true);
+
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('foodItems', JSON.stringify(foodItems));
+      formData.append('foodType', foodType);
+      formData.append('latitude', locationData.latitude);
+      formData.append('longitude', locationData.longitude);
+      formData.append('address', locationData.address);
+      formData.append('phone', locationData.phone);
+      formData.append('firebaseUid', auth.currentUser?.uid);
       
-      // Show success screen
-      setCurrentStep(3);
-      
-      // Example Firebase integration:
-      // firebase.firestore().collection('donations').add(donationData);
+      if (foodImage) {
+        formData.append('foodImage', foodImage);
+      }
+
+      // Get Firebase token
+      const token = await auth.currentUser.getIdToken();
+
+      const response = await api.post('/donations', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (response.data.success) {
+        setCurrentStep(3);
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      alert('Error submitting donation: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -83,12 +211,22 @@ const DonateForm = () => {
   };
 
   const handleDone = () => {
-    navigate(-1);
+    navigate('/home');
+  };
+
+  const mapContainerStyle = {
+    width: '100%',
+    height: '400px',
+    borderRadius: '12px'
+  };
+
+  const mapCenter = {
+    lat: locationData.latitude || 17.385044,
+    lng: locationData.longitude || 78.486671
   };
 
   return (
     <div className="page" style={styles.container}>
-      {/* Header */}
       <div style={styles.header}>
         <button style={styles.backBtn} onClick={handleBack}>
           ← Back
@@ -96,7 +234,6 @@ const DonateForm = () => {
         <h1 style={styles.title}>Donate Food</h1>
       </div>
 
-      {/* Content */}
       <div style={styles.content}>
         {/* Step 1: Food Details */}
         {currentStep === 1 && (
@@ -105,7 +242,7 @@ const DonateForm = () => {
               <h2 style={styles.formTitle}>Food Details</h2>
               <p style={styles.formSubtitle}>Tell us what you're donating</p>
               
-              {/* Food Type Selection */}
+              {/* Food Type */}
               <div style={styles.formGroup}>
                 <label style={styles.formLabel}>Food Type</label>
                 <div style={styles.foodTypeGrid}>
@@ -129,6 +266,30 @@ const DonateForm = () => {
                     <div style={styles.foodTypeIcon}>🍗</div>
                     <div style={styles.foodTypeLabel}>Non-Veg</div>
                   </div>
+                </div>
+              </div>
+
+              {/* Food Image Upload */}
+              <div style={styles.formGroup}>
+                <label style={styles.formLabel}>Food Image (Optional)</label>
+                <div style={styles.imageUploadContainer}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    style={{ display: 'none' }}
+                    id="food-image-input"
+                  />
+                  <label htmlFor="food-image-input" style={styles.imageUploadLabel}>
+                    {imagePreview ? (
+                      <img src={imagePreview} alt="Preview" style={styles.imagePreview} />
+                    ) : (
+                      <div style={styles.imageUploadPlaceholder}>
+                        <div style={styles.uploadIcon}>📷</div>
+                        <div>Click to upload food image</div>
+                      </div>
+                    )}
+                  </label>
                 </div>
               </div>
 
@@ -164,7 +325,6 @@ const DonateForm = () => {
                   </div>
                 ))}
                 
-                {/* Add Item Button */}
                 <button style={styles.addBtn} onClick={addFoodItem}>
                   <span style={styles.addBtnIcon}>+</span>
                   <span>Add More Food Items</span>
@@ -189,46 +349,81 @@ const DonateForm = () => {
           </div>
         )}
 
-        {/* Step 2: Location Details */}
+        {/* Step 2: Location with Google Maps */}
         {currentStep === 2 && (
           <div style={styles.stepContent}>
             <div style={styles.formCard}>
               <h2 style={styles.formTitle}>Pickup Location</h2>
               <p style={styles.formSubtitle}>Where can the food be collected from?</p>
-              
+
+              {/* Address Search */}
               <div style={styles.formGroup}>
-                <label style={styles.formLabel}>Address</label>
-                <textarea 
+                <label style={styles.formLabel}>Search Address</label>
+                <div style={styles.searchContainer}>
+                  <input
+                    type="text"
+                    style={styles.searchInput}
+                    placeholder="Enter address to search..."
+                    value={searchAddress}
+                    onChange={(e) => setSearchAddress(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && searchLocation()}
+                  />
+                  <button style={styles.searchBtn} onClick={searchLocation}>
+                    🔍
+                  </button>
+                </div>
+              </div>
+
+              {/* Google Map */}
+              <div style={styles.formGroup}>
+                <label style={styles.formLabel}>Pin Location (Click on map or drag marker)</label>
+                <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+                  <GoogleMap
+                    mapContainerStyle={mapContainerStyle}
+                    center={mapCenter}
+                    zoom={15}
+                    onClick={onMapClick}
+                    onLoad={setMap}
+                  >
+                    {marker && (
+                      <Marker
+                        position={marker}
+                        draggable={true}
+                        onDragEnd={(e) => {
+                          const lat = e.latLng.lat();
+                          const lng = e.latLng.lng();
+                          setMarker({ lat, lng });
+                          setLocationData(prev => ({
+                            ...prev,
+                            latitude: lat,
+                            longitude: lng
+                          }));
+                          reverseGeocode(lat, lng);
+                        }}
+                      />
+                    )}
+                  </GoogleMap>
+                </LoadScript>
+                <button 
+                  style={styles.gpsBtn}
+                  onClick={getCurrentLocation}
+                >
+                  📍 Use Current Location
+                </button>
+              </div>
+
+              {/* Address Display */}
+              <div style={styles.formGroup}>
+                <label style={styles.formLabel}>Selected Address</label>
+                <textarea
                   style={styles.formTextarea}
-                  placeholder="Enter your full address..."
                   value={locationData.address}
                   onChange={(e) => setLocationData({ ...locationData, address: e.target.value })}
+                  placeholder="Address will appear here..."
                 />
               </div>
 
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>City</label>
-                <input 
-                  type="text"
-                  style={styles.formInput}
-                  placeholder="e.g., Hyderabad"
-                  value={locationData.city}
-                  onChange={(e) => setLocationData({ ...locationData, city: e.target.value })}
-                />
-              </div>
-
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>Pincode</label>
-                <input 
-                  type="text"
-                  style={styles.formInput}
-                  placeholder="e.g., 500001"
-                  maxLength="6"
-                  value={locationData.pincode}
-                  onChange={(e) => setLocationData({ ...locationData, pincode: e.target.value })}
-                />
-              </div>
-
+              {/* Contact Number */}
               <div style={styles.formGroup}>
                 <label style={styles.formLabel}>Contact Number</label>
                 <input 
@@ -249,10 +444,10 @@ const DonateForm = () => {
                     opacity: isStep2Valid() ? 1 : 0.5,
                     cursor: isStep2Valid() ? 'pointer' : 'not-allowed'
                   }}
-                  disabled={!isStep2Valid()}
+                  disabled={!isStep2Valid() || loading}
                   onClick={submitDonation}
                 >
-                  Submit Donation
+                  {loading ? 'Submitting...' : 'Submit Donation'}
                 </button>
               </div>
             </div>
@@ -266,7 +461,9 @@ const DonateForm = () => {
               <div style={styles.successContainer}>
                 <div style={styles.successIcon}>🎉</div>
                 <h2 style={styles.successTitle}>Donation Submitted!</h2>
-                <p style={styles.successText}>Thank you for your generosity. Your food donation has been registered.</p>
+                <p style={styles.successText}>
+                  Thank you for your generosity. Your food donation has been registered and will be visible to receivers nearby.
+                </p>
 
                 <div style={styles.donationSummary}>
                   <div style={styles.summaryItem}>
@@ -287,7 +484,7 @@ const DonateForm = () => {
                   ))}
                   <div style={styles.summaryItem}>
                     <span style={styles.summaryLabel}>Location:</span>
-                    <span style={styles.summaryValue}>{locationData.city}, {locationData.pincode}</span>
+                    <span style={styles.summaryValue}>{locationData.address.substring(0, 50)}...</span>
                   </div>
                 </div>
 
@@ -312,7 +509,7 @@ const styles = {
     background: '#F9F9F9',
   },
   header: {
-    background: '#7C9D3D',
+    background: COLORS.primary,
     color: 'white',
     padding: '20px',
   },
@@ -320,20 +517,17 @@ const styles = {
     background: 'transparent',
     border: 'none',
     color: 'white',
-    fontSize: '16px',
+    fontSize: FONT_SIZES.md,
     cursor: 'pointer',
     marginBottom: '8px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '4px',
   },
   title: {
-    fontSize: '24px',
+    fontSize: FONT_SIZES.xl,
     fontWeight: 'bold',
   },
   content: {
     padding: '20px',
-    maxWidth: '600px',
+    maxWidth: '800px',
     margin: '0 auto',
   },
   stepContent: {
@@ -344,17 +538,16 @@ const styles = {
     borderRadius: '12px',
     padding: '24px',
     boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    marginBottom: '16px',
   },
   formTitle: {
-    fontSize: '20px',
+    fontSize: FONT_SIZES.lg,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORS.text,
     marginBottom: '8px',
   },
   formSubtitle: {
-    fontSize: '14px',
-    color: '#7F8C8D',
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textLight,
     marginBottom: '20px',
   },
   formGroup: {
@@ -362,9 +555,9 @@ const styles = {
   },
   formLabel: {
     display: 'block',
-    fontSize: '14px',
+    fontSize: FONT_SIZES.sm,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORS.text,
     marginBottom: '8px',
   },
   foodTypeGrid: {
@@ -374,7 +567,7 @@ const styles = {
   },
   foodTypeCard: {
     background: 'white',
-    border: '2px solid #E0E0E0',
+    border: `2px solid ${COLORS.border}`,
     borderRadius: '12px',
     padding: '16px',
     textAlign: 'center',
@@ -382,17 +575,47 @@ const styles = {
     transition: 'all 0.3s ease',
   },
   foodTypeCardSelected: {
-    borderColor: '#7C9D3D',
-    background: 'rgba(124, 157, 61, 0.05)',
+    borderColor: COLORS.primary,
+    background: '#F5F7F0',
   },
   foodTypeIcon: {
     fontSize: '32px',
     marginBottom: '4px',
   },
   foodTypeLabel: {
-    fontSize: '14px',
+    fontSize: FONT_SIZES.sm,
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORS.text,
+  },
+  imageUploadContainer: {
+    width: '100%',
+  },
+  imageUploadLabel: {
+    display: 'block',
+    width: '100%',
+    minHeight: '200px',
+    border: `2px dashed ${COLORS.border}`,
+    borderRadius: '12px',
+    cursor: 'pointer',
+    overflow: 'hidden',
+    background: '#F9F9F9',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '200px',
+    objectFit: 'cover',
+  },
+  imageUploadPlaceholder: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '200px',
+    color: COLORS.textLight,
+  },
+  uploadIcon: {
+    fontSize: '48px',
+    marginBottom: '12px',
   },
   foodItemRow: {
     display: 'flex',
@@ -407,63 +630,86 @@ const styles = {
   },
   formInput: {
     padding: '12px 16px',
-    fontSize: '16px',
-    color: '#2C3E50',
+    fontSize: FONT_SIZES.md,
+    color: COLORS.text,
     background: 'white',
-    border: '2px solid #E0E0E0',
+    border: `1px solid ${COLORS.border}`,
     borderRadius: '8px',
-    transition: 'border-color 0.2s ease',
-    fontFamily: 'inherit',
     width: '100%',
   },
   formTextarea: {
     width: '100%',
     padding: '12px 16px',
-    fontSize: '16px',
-    color: '#2C3E50',
+    fontSize: FONT_SIZES.md,
+    color: COLORS.text,
     background: 'white',
-    border: '2px solid #E0E0E0',
+    border: `1px solid ${COLORS.border}`,
     borderRadius: '8px',
-    transition: 'border-color 0.2s ease',
-    fontFamily: 'inherit',
     resize: 'vertical',
     minHeight: '80px',
+    fontFamily: 'inherit',
   },
   removeBtn: {
     width: '36px',
     height: '36px',
     borderRadius: '8px',
-    border: '2px solid #E74C3C',
+    border: `2px solid ${COLORS.error}`,
     background: 'white',
-    color: '#E74C3C',
+    color: COLORS.error,
     fontSize: '18px',
     cursor: 'pointer',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    transition: 'all 0.2s ease',
     flexShrink: 0,
   },
   addBtn: {
     width: '100%',
     padding: '12px',
     borderRadius: '8px',
-    border: '2px dashed #7C9D3D',
-    background: 'rgba(124, 157, 61, 0.05)',
-    color: '#7C9D3D',
-    fontSize: '14px',
+    border: `2px dashed ${COLORS.primary}`,
+    background: 'rgba(112, 130, 56, 0.05)',
+    color: COLORS.primary,
+    fontSize: FONT_SIZES.sm,
     fontWeight: '600',
     cursor: 'pointer',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     gap: '8px',
-    transition: 'all 0.2s ease',
     marginTop: '8px',
   },
   addBtnIcon: {
     fontSize: '20px',
-    fontWeight: 'bold',
+  },
+  searchContainer: {
+    display: 'flex',
+    gap: '8px',
+  },
+  searchInput: {
+    flex: 1,
+    padding: '12px 16px',
+    fontSize: FONT_SIZES.md,
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: '8px',
+  },
+  searchBtn: {
+    padding: '12px 20px',
+    background: COLORS.primary,
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: '20px',
+  },
+  gpsBtn: {
+    width: '100%',
+    marginTop: '12px',
+    padding: '12px',
+    background: COLORS.secondary,
+    color: COLORS.text,
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '600',
   },
   btnGroup: {
     display: 'flex',
@@ -474,25 +720,23 @@ const styles = {
     flex: 1,
     padding: '14px 24px',
     borderRadius: '8px',
-    fontSize: '16px',
+    fontSize: FONT_SIZES.md,
     fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
     border: 'none',
-    background: '#7C9D3D',
+    background: COLORS.primary,
     color: 'white',
   },
   btnSecondary: {
     flex: 1,
     padding: '14px 24px',
     borderRadius: '8px',
-    fontSize: '16px',
+    fontSize: FONT_SIZES.md,
     fontWeight: '600',
     cursor: 'pointer',
-    transition: 'all 0.2s ease',
     background: 'white',
-    color: '#2C3E50',
-    border: '2px solid #E0E0E0',
+    color: COLORS.text,
+    border: `2px solid ${COLORS.border}`,
   },
   successContainer: {
     textAlign: 'center',
@@ -503,19 +747,19 @@ const styles = {
     marginBottom: '20px',
   },
   successTitle: {
-    fontSize: '24px',
+    fontSize: FONT_SIZES.xl,
     fontWeight: 'bold',
-    color: '#2C3E50',
+    color: COLORS.text,
     marginBottom: '12px',
   },
   successText: {
-    fontSize: '16px',
-    color: '#7F8C8D',
+    fontSize: FONT_SIZES.md,
+    color: COLORS.textLight,
     marginBottom: '24px',
   },
   donationSummary: {
-    background: 'rgba(124, 157, 61, 0.05)',
-    border: '2px solid #7C9D3D',
+    background: 'rgba(112, 130, 56, 0.05)',
+    border: `2px solid ${COLORS.primary}`,
     borderRadius: '12px',
     padding: '20px',
     margin: '24px 0',
@@ -525,14 +769,14 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     marginBottom: '12px',
-    fontSize: '14px',
+    fontSize: FONT_SIZES.sm,
   },
   summaryLabel: {
-    color: '#7F8C8D',
+    color: COLORS.textLight,
   },
   summaryValue: {
     fontWeight: '600',
-    color: '#2C3E50',
+    color: COLORS.text,
   },
 };
 
