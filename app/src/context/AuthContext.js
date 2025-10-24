@@ -2,14 +2,15 @@ import React, { createContext, useState, useContext, useEffect } from 'react';
 import { 
   signInWithPhoneNumber, 
   RecaptchaVerifier,
-  GoogleAuthProvider,
-  signInWithPopup,
   signOut as firebaseSignOut,
-  onAuthStateChanged
+  onAuthStateChanged,
+  GoogleAuthProvider,
+  signInWithCredential
 } from 'firebase/auth';
 import { auth } from '../config/firebaseConfig';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
+import { Alert } from 'react-native';
 
 const AuthContext = createContext({});
 
@@ -20,7 +21,7 @@ export const AuthProvider = ({ children }) => {
   const [initializing, setInitializing] = useState(true);
 
   // Configure axios defaults
-  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api';
+  const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://10.9.31.253:5000/api';
   axios.defaults.baseURL = API_URL;
 
   // Listen for authentication state changes
@@ -39,7 +40,7 @@ export const AuthProvider = ({ children }) => {
           setUserProfile(response.data);
           await AsyncStorage.setItem('userProfile', JSON.stringify(response.data));
         } catch (error) {
-          console.error('Error fetching user profile:', error);
+          console.log('User not registered yet, will create profile');
         }
       } else {
         delete axios.defaults.headers.common['Authorization'];
@@ -54,19 +55,15 @@ export const AuthProvider = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  // Phone authentication - Note: Phone auth has limitations on web/Expo Go
+  // Phone authentication (Limited in Expo - needs native build)
   const signInWithPhone = async (phoneNumber) => {
     try {
-      // This requires RecaptchaVerifier which works better on web
-      // For mobile, you'll need to use a different approach or build with EAS
-      const recaptchaVerifier = new RecaptchaVerifier('recaptcha-container', {
-        size: 'invisible',
-      }, auth);
-      
-      const confirmation = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier);
-      return confirmation;
+      Alert.alert(
+        'Phone Auth Coming Soon',
+        'Phone authentication requires a production build. For now, please use Google Sign-in or continue as guest.'
+      );
+      return null;
     } catch (error) {
-      console.error('Phone sign-in error:', error);
       throw error;
     }
   };
@@ -80,25 +77,73 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Google Sign-in
+  // Google Sign-in (Will work after proper setup)
   const signInWithGoogle = async () => {
     try {
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-      return result.user;
+      Alert.alert(
+        'Google Sign-in',
+        'Google sign-in requires additional native configuration. For now, let\'s continue with demo mode.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              // For demo purposes, create a mock user
+              createDemoUser();
+            }
+          }
+        ]
+      );
     } catch (error) {
       console.error('Google sign-in error:', error);
       throw error;
     }
   };
 
-  // Update user profile
+  // Demo user for development
+  const createDemoUser = async () => {
+    try {
+      // Create a demo profile
+      const demoProfile = {
+        id: 'demo_' + Date.now(),
+        name: 'Demo User',
+        email: 'demo@annammithra.com',
+        role: 'donor',
+        phoneNumber: '+91 9876543210',
+      };
+      
+      setUserProfile(demoProfile);
+      await AsyncStorage.setItem('userProfile', JSON.stringify(demoProfile));
+      
+      Alert.alert('Success', 'Logged in as Demo User');
+    } catch (error) {
+      console.error('Demo user creation error:', error);
+    }
+  };
+
+  // Create/Update user profile
   const updateProfile = async (profileData) => {
     try {
-      const response = await axios.put('/users/profile', profileData);
-      setUserProfile(response.data);
-      await AsyncStorage.setItem('userProfile', JSON.stringify(response.data));
-      return response.data;
+      if (!user && !userProfile) {
+        // If no Firebase user, just update local profile
+        const updatedProfile = { ...userProfile, ...profileData };
+        setUserProfile(updatedProfile);
+        await AsyncStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+        return updatedProfile;
+      }
+
+      // If backend is available, sync with server
+      try {
+        const response = await axios.put('/users/profile', profileData);
+        setUserProfile(response.data);
+        await AsyncStorage.setItem('userProfile', JSON.stringify(response.data));
+        return response.data;
+      } catch (error) {
+        // If backend not available, update locally
+        const updatedProfile = { ...userProfile, ...profileData };
+        setUserProfile(updatedProfile);
+        await AsyncStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+        return updatedProfile;
+      }
     } catch (error) {
       throw error;
     }
@@ -107,7 +152,10 @@ export const AuthProvider = ({ children }) => {
   // Sign out
   const signOut = async () => {
     try {
-      await firebaseSignOut(auth);
+      if (user) {
+        await firebaseSignOut(auth);
+      }
+      setUserProfile(null);
       await AsyncStorage.clear();
     } catch (error) {
       throw error;
@@ -123,6 +171,7 @@ export const AuthProvider = ({ children }) => {
     signInWithGoogle,
     updateProfile,
     signOut,
+    isAuthenticated: !!userProfile,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

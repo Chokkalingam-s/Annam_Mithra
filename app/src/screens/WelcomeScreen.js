@@ -40,12 +40,14 @@ const WelcomeScreen = ({ navigation }) => {
           variant="primary"
           onPress={() => navigation.navigate('Login')}
         />
-        <Button
-          title={t('signup')}
-          variant="outline"
-          onPress={() => navigation.navigate('RoleSelection')}
-          style={{ marginTop: 16 }}
-        />
+// Change the signup button navigation
+<Button
+  title={t('signup')}
+  variant="outline"
+  onPress={() => navigation.navigate('Signup')}
+  style={{ marginTop: 16 }}
+/>
+
       </View>
 
       <Text style={styles.footer}>By continuing, you agree to our Terms & Privacy Policy</Text>

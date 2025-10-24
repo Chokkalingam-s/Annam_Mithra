@@ -21,36 +21,39 @@ const resources = {
       success: 'Success!',
       
       // Authentication
-      welcome: 'Welcome to Annam Mithra',
-      welcome_desc: 'Join us in eliminating food waste and feeding those in need',
-      login: 'Login',
-      signup: 'Sign Up',
-      phone_number: 'Phone Number',
-      enter_phone: 'Enter your phone number',
-      send_otp: 'Send OTP',
-      verify_otp: 'Verify OTP',
-      enter_otp: 'Enter 6-digit OTP',
-      google_signin: 'Continue with Google',
-      or: 'OR',
+ // Auth
+      email: 'Email',
+      password: 'Password',
+      confirm_password: 'Confirm Password',
+      enter_email: 'Enter your email',
+      enter_password: 'Enter password',
+      create_account: 'Create Account',
+      already_have_account: 'Already have an account?',
+      dont_have_account: "Don't have an account?",
       
-      // Role Selection
-      select_role: 'Select Your Role',
-      role_desc: 'Choose how you want to contribute',
-      donor: 'Donor',
-      donor_desc: 'I want to donate surplus food',
-      receiver: 'Receiver',
-      receiver_desc: 'I need food assistance',
-      volunteer: 'Volunteer',
-      volunteer_desc: 'I want to help with deliveries',
-      
-      // Receiver Type
-      select_type: 'Select Type',
-      individual: 'Individual',
-      ngo: 'NGO / Organization',
+      // Profile Setup
+      complete_profile: 'Complete Your Profile',
+      profile_desc: 'Help us personalize your experience',
+      full_name: 'Full Name',
+      enter_name: 'Enter your full name',
+      mobile_number: 'Mobile Number',
+      enter_mobile: 'Enter your mobile number',
       food_preference: 'Food Preference',
-      veg: 'Vegetarian',
-      non_veg: 'Non-Vegetarian',
-      both: 'Both',
+      receiver_type: 'I am a',
+      individual: 'Individual',
+      ngo: 'NGO',
+      charity: 'Charity',
+      ashram: 'Ashram',
+      bulk_receiver: 'Bulk Receiver',
+      location: 'Location',
+      enter_address: 'Enter your address',
+      use_current_location: 'Use Current Location',
+      
+      // Roles
+      also_want_to: 'I also want to',
+      donate_food: 'Donate Food',
+      receive_food: 'Receive Food',
+      volunteer_delivery: 'Volunteer for Delivery',
     }
   },
   ta: {

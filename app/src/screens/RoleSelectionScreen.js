@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { COLORS, SIZES, SHADOWS } from '../config/theme';
 import Button from '../components/Button';
+import { useAuth } from '../context/AuthContext';
 
 const RoleSelectionScreen = ({ navigation }) => {
   const { t } = useTranslation();
+  const { updateProfile } = useAuth();
   const [selectedRole, setSelectedRole] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const roles = [
     {
@@ -29,11 +32,25 @@ const RoleSelectionScreen = ({ navigation }) => {
     },
   ];
 
-  const handleContinue = () => {
-    if (selectedRole === 'receiver') {
-      navigation.navigate('ReceiverSetup');
-    } else {
-      navigation.navigate('Login');
+  const handleContinue = async () => {
+    if (!selectedRole) return;
+
+    try {
+      setLoading(true);
+
+      // Update user profile with selected role
+      await updateProfile({ role: selectedRole });
+
+      if (selectedRole === 'receiver') {
+        // Navigate to receiver setup for additional info
+        Alert.alert('Success', 'Role selected! Receiver setup coming soon.');
+      } else {
+        Alert.alert('Success', 'Profile created successfully!');
+      }
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -72,6 +89,7 @@ const RoleSelectionScreen = ({ navigation }) => {
         variant="primary"
         onPress={handleContinue}
         disabled={!selectedRole}
+        loading={loading}
       />
 
       <TouchableOpacity onPress={() => navigation.goBack()}>

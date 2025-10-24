@@ -24,15 +24,18 @@ module.exports = (sequelize, Sequelize) => {
     },
     role: {
       type: Sequelize.ENUM('donor', 'receiver', 'volunteer'),
-      allowNull: false
+      allowNull: false,
+      defaultValue: 'donor' // Everyone can donate by default
     },
     receiverType: {
-      type: Sequelize.ENUM('individual', 'ngo'),
-      allowNull: true
+      type: Sequelize.ENUM('individual', 'ngo', 'charity', 'ashram', 'bulk'),
+      allowNull: true,
+      comment: 'Type of receiver organization or individual'
     },
     vegPreference: {
       type: Sequelize.ENUM('veg', 'non-veg', 'both'),
-      allowNull: true
+      defaultValue: 'both',
+      allowNull: false
     },
     latitude: {
       type: Sequelize.DECIMAL(10, 8),
@@ -61,6 +64,11 @@ module.exports = (sequelize, Sequelize) => {
     language: {
       type: Sequelize.ENUM('en', 'ta'),
       defaultValue: 'en'
+    },
+    profileCompleted: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: false,
+      comment: 'Whether user has completed initial profile setup'
     }
   });
 

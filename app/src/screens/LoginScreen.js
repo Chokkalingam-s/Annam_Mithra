@@ -61,11 +61,18 @@ const LoginScreen = ({ navigation }) => {
           loading={loading}
         />
       </View>
+      <View style={styles.footer}>
+  <Text style={styles.footerText}>{t('dont_have_account')} </Text>
+  <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+    <Text style={styles.linkText}>{t('signup')}</Text>
+  </TouchableOpacity>
+</View>
 
       <TouchableOpacity onPress={() => navigation.goBack()}>
         <Text style={styles.backText}>← Back to Welcome</Text>
       </TouchableOpacity>
     </View>
+    
   );
 };
 
@@ -120,6 +127,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '600',
   },
+  footer: {
+  flexDirection: 'row',
+  justifyContent: 'center',
+  marginTop: 24,
+},
+footerText: {
+  fontSize: SIZES.font,
+  color: COLORS.textLight,
+},
+linkText: {
+  fontSize: SIZES.font,
+  color: COLORS.primary,
+  fontWeight: '600',
+},
 });
 
 export default LoginScreen;
