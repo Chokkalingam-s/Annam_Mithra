@@ -51,13 +51,8 @@ app.get('/', (req, res) => {
   res.json({ message: "Welcome to Annam Mithra API" });
 });
 
-// API Routes (we'll create these next)
-// app.use('/api/auth', require('./routes/auth.routes'));
-// app.use('/api/users', require('./routes/user.routes'));
-// app.use('/api/donations', require('./routes/donation.routes'));
-// app.use('/api/interests', require('./routes/interest.routes'));
-// app.use('/api/chat', require('./routes/chat.routes'));
-// app.use('/api/delivery', require('./routes/delivery.routes'));
+// API Routes
+app.use('/api/users', require('./routes/user.routes'));
 
 // Start server
 const PORT = process.env.PORT || 5000;

@@ -25,12 +25,11 @@ module.exports = (sequelize, Sequelize) => {
     role: {
       type: Sequelize.ENUM('donor', 'receiver', 'volunteer'),
       allowNull: false,
-      defaultValue: 'donor' // Everyone can donate by default
+      defaultValue: 'donor'
     },
     receiverType: {
       type: Sequelize.ENUM('individual', 'ngo', 'charity', 'ashram', 'bulk'),
-      allowNull: true,
-      comment: 'Type of receiver organization or individual'
+      allowNull: true
     },
     vegPreference: {
       type: Sequelize.ENUM('veg', 'non-veg', 'both'),
@@ -67,8 +66,7 @@ module.exports = (sequelize, Sequelize) => {
     },
     profileCompleted: {
       type: Sequelize.BOOLEAN,
-      defaultValue: false,
-      comment: 'Whether user has completed initial profile setup'
+      defaultValue: false
     }
   });
 

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { auth } from '../config/firebase';
 import Button from '../components/Button';
 import Input from '../components/Input';
+import api from '../services/api'; 
 import { COLORS, SPACING, FONT_SIZES } from '../config/theme';
 
 const ProfileSetup = () => {
@@ -43,34 +44,54 @@ const ProfileSetup = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!validateForm()) return;
+
+  try {
+    setLoading(true);
+
+    const profile = {
+      firebaseUid: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      name: formData.name,
+      phone: formData.phone,
+      vegPreference: formData.vegPreference,
+      receiverType: formData.receiverType,
+      address: formData.address,
+      latitude: null, // Will add location later
+      longitude: null,
+    };
+
+    // Get Firebase token
+    const token = await auth.currentUser.getIdToken();
     
-    if (!validateForm()) return;
+    // Send to backend
+    const response = await api.post('/users/profile', profile, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
 
-    try {
-      setLoading(true);
-
-      const profile = {
-        ...formData,
-        email: auth.currentUser?.email,
-        firebaseUid: auth.currentUser?.uid,
+    if (response.data.success) {
+      // Save to localStorage
+      localStorage.setItem('userProfile', JSON.stringify({
+        ...response.data.data,
         profileCompleted: true,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Save to localStorage for now (will connect to backend later)
-      localStorage.setItem('userProfile', JSON.stringify(profile));
+      }));
       
       alert('Profile created successfully!');
-      window.location.href = '/home'; // Force reload to update App state
-      
-    } catch (error) {
-      alert('Error: ' + error.message);
-    } finally {
-      setLoading(false);
+      window.location.href = '/home';
     }
-  };
+    
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Error: ' + (error.response?.data?.message || error.message));
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="page" style={styles.container}>
