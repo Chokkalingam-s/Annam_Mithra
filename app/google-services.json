@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "852340191027",
+    "project_id": "annam-mithra",
+    "storage_bucket": "annam-mithra.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:852340191027:android:0bab36e5f536f8e97b9846",
+        "android_client_info": {
+          "package_name": "com.choks.annammithra"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "852340191027-bi7ag46prd383ml45pu3cr063u15cn8a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.choks.annammithra",
+            "certificate_hash": "130f5f378bd8fee08414e9a7000ba77417c21175"
+          }
+        },
+        {
+          "client_id": "852340191027-jca2vbjv9f6grcu36t4muvcck93tpoev.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAi88fRzRoTvv0CGjuhSX3K_crFzzvAIqA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "852340191027-jca2vbjv9f6grcu36t4muvcck93tpoev.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "852340191027-hc8kh1l4bbnbnii4h2gcarcp5afbo4is.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.choks.annammithra"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
