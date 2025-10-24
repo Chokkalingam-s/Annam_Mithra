@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { COLORS } from '../config/theme';
+import React, { useEffect, useState } from "react";
+import { COLORS } from "../config/theme";
+import logo from "../assets/logo.png";
 
 const Splash = () => {
   const [fadeIn, setFadeIn] = useState(false);
@@ -9,55 +10,66 @@ const Splash = () => {
   }, []);
 
   return (
-    <div style={{
-      height: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: COLORS.primary,
-      opacity: fadeIn ? 1 : 0,
-      transition: 'opacity 0.8s ease-in',
-    }}>
-      <div style={{
-        width: '140px',
-        height: '140px',
-        borderRadius: '70px',
-        background: 'white',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: '24px',
-        padding: '20px',
-        animation: 'scaleIn 0.8s ease-out',
-      }}>
-        <img 
-          src="/src/assets/logo.png" 
-          alt="Annam Mithra" 
+    <div
+      style={{
+        height: "100vh",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        justifyContent: "center",
+        background: COLORS.primary,
+        opacity: fadeIn ? 1 : 0,
+        transition: "opacity 0.8s ease-in",
+      }}
+    >
+      <div
+        style={{
+          width: "140px",
+          height: "140px",
+          borderRadius: "50%",
+          background: "white",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: "24px",
+          padding: "0", // Changed from '20px' to '0'
+          animation: "scaleIn 0.8s ease-out",
+          overflow: "hidden",
+          boxShadow: "none", // Added to ensure no shadow
+        }}
+      >
+        <img
+          src={logo}
+          alt="Annam Mithra"
           style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'contain',
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+            borderRadius: "50%",
           }}
         />
       </div>
-      
-      <h1 style={{
-        fontSize: '32px',
-        fontWeight: 'bold',
-        color: 'white',
-        marginBottom: '8px',
-        animation: 'fadeInUp 1s ease-out 0.3s backwards',
-      }}>
+
+      <h1
+        style={{
+          fontSize: "32px",
+          fontWeight: "bold",
+          color: "white",
+          marginBottom: "8px",
+          animation: "fadeInUp 1s ease-out 0.3s backwards",
+        }}
+      >
         Annam Mithra
       </h1>
-      
-      <p style={{
-        fontSize: '18px',
-        color: COLORS.secondary,
-        fontWeight: '500',
-        animation: 'fadeInUp 1s ease-out 0.5s backwards',
-      }}>
+
+      <p
+        style={{
+          fontSize: "18px",
+          color: COLORS.secondary,
+          fontWeight: "500",
+          animation: "fadeInUp 1s ease-out 0.5s backwards",
+        }}
+      >
         Share Food, Share Love
       </p>
 
