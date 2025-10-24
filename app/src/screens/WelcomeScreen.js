@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { COLORS, SIZES, SHADOWS } from '../config/theme';
 import Button from '../components/Button';
+import Logo from '../components/Logo';
 
 const WelcomeScreen = ({ navigation }) => {
   const { t } = useTranslation();
@@ -10,7 +11,7 @@ const WelcomeScreen = ({ navigation }) => {
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.logo}>🍲</Text>
+        <Logo size={100} />
         <Text style={styles.title}>{t('app_name')}</Text>
         <Text style={styles.subtitle}>{t('tagline')}</Text>
       </View>
@@ -71,15 +72,12 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 40,
   },
-  logo: {
-    fontSize: 80,
-    marginBottom: 16,
-  },
   title: {
     fontSize: SIZES.title,
     fontWeight: 'bold',
     color: COLORS.primary,
     marginBottom: 8,
+    marginTop: 16,
   },
   subtitle: {
     fontSize: SIZES.large,

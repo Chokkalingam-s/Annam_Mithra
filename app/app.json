@@ -4,24 +4,12 @@
     "slug": "annam-mithra",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#708238"
-    },
-    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourname.annammithra",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "bundleIdentifier": "com.yourname.annammithra"
     },
     "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#708238"
-      },
       "package": "com.yourname.annammithra",
       "googleServicesFile": "./google-services.json",
       "permissions": [
@@ -36,21 +24,9 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "Allow Annam Mithra to use your location to find nearby food donations."
+          "locationAlwaysAndWhenInUsePermission": "Allow Annam Mithra to use your location."
         }
       ]
-    ],
-    "web": {
-      "config": {
-        "firebase": {
-          "apiKey": "YOUR_WEB_API_KEY",
-          "authDomain": "annam-mithra.firebaseapp.com",
-          "projectId": "annam-mithra",
-          "storageBucket": "annam-mithra.appspot.com",
-          "messagingSenderId": "YOUR_SENDER_ID",
-          "appId": "YOUR_APP_ID"
-        }
-      }
-    }
+    ]
   }
 }

@@ -39,7 +39,6 @@ const SplashScreen = ({ navigation }) => {
         ]}
       >
         <View style={styles.logoContainer}>
-          {/* Use your custom logo image */}
           <Image 
             source={require('../../assets/logo.png')} 
             style={styles.logoImage}
@@ -64,9 +63,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     backgroundColor: COLORS.background,
     alignItems: 'center',
     justifyContent: 'center',
@@ -74,8 +73,8 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   logoImage: {
-    width: 80,
-    height: 80,
+    width: '100%',
+    height: '100%',
   },
   title: {
     fontSize: SIZES.title,
