@@ -53,6 +53,7 @@ app.get('/', (req, res) => {
 
 // API Routes
 app.use('/api/users', require('./routes/user.routes'));
+app.use('/api/donations', require('./routes/donation.routes'));
 
 // Start server
 const PORT = process.env.PORT || 5000;
