@@ -3,13 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import { auth } from '../config/firebase';
 import api from '../services/api';
-import { COLORS, FONT_SIZES } from '../config/theme';
 
 const DonateForm = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [foodType, setFoodType] = useState('');
-  const [targetReceiverType, setTargetReceiverType] = useState('both'); // New field
+  const [targetReceiverType, setTargetReceiverType] = useState('both');
   const [foodItems, setFoodItems] = useState([{ dishName: '', quantity: '' }]);
   const [foodImage, setFoodImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -24,7 +23,15 @@ const DonateForm = () => {
   const [searchAddress, setSearchAddress] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Get user's current location on mount
+  // Get responsive state
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     getCurrentLocation();
   }, []);
@@ -169,7 +176,7 @@ const DonateForm = () => {
       const formData = new FormData();
       formData.append('foodItems', JSON.stringify(foodItems));
       formData.append('foodType', foodType);
-      formData.append('targetReceiverType', targetReceiverType); // Add this
+      formData.append('targetReceiverType', targetReceiverType);
       formData.append('latitude', locationData.latitude);
       formData.append('longitude', locationData.longitude);
       formData.append('address', locationData.address);
@@ -216,8 +223,9 @@ const DonateForm = () => {
 
   const mapContainerStyle = {
     width: '100%',
-    height: '400px',
-    borderRadius: '12px'
+    height: isMobile ? '300px' : '400px',
+    borderRadius: '10px',
+    border: '1px solid #E5E7EB'
   };
 
   const mapCenter = {
@@ -225,421 +233,541 @@ const DonateForm = () => {
     lng: locationData.longitude || 78.486671
   };
 
-  // Donate To options
   const donateToOptions = [
-    { id: 'individual', label: 'Individual', icon: '👤', desc: 'Donate to individuals in need' },
-    { id: 'ngo', label: 'Organizations', icon: '🏢', desc: 'NGOs, Charities, Ashrams, etc.' },
-    { id: 'both', label: 'Anyone', icon: '🤝', desc: 'Open to all' },
+    { id: 'individual', label: 'Individual', icon: '👤' },
+    { id: 'ngo', label: 'Organizations', icon: '🏢' },
+    { id: 'both', label: 'Anyone', icon: '🤝' },
   ];
 
   return (
-    <div className="page" style={styles.container}>
-      <div style={styles.header}>
-        <button style={styles.backBtn} onClick={handleBack}>
-          ← Back
-        </button>
-        <h1 style={styles.title}>Donate Food</h1>
-      </div>
-
-      <div style={styles.content}>
-        {/* Step 1: Food Details */}
-        {currentStep === 1 && (
-          <div style={styles.stepContent}>
-            <div style={styles.formCard}>
-              <h2 style={styles.formTitle}>Food Details</h2>
-              <p style={styles.formSubtitle}>Tell us what you're donating</p>
-              
-              {/* Food Type */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>Food Type</label>
-                <div style={styles.foodTypeGrid}>
-                  <div 
-                    style={{
-                      ...styles.foodTypeCard,
-                      ...(foodType === 'veg' && styles.foodTypeCardSelected)
-                    }}
-                    onClick={() => setFoodType('veg')}
-                  >
-                    <div style={styles.foodTypeIcon}>🥗</div>
-                    <div style={styles.foodTypeLabel}>Veg</div>
-                  </div>
-                  <div 
-                    style={{
-                      ...styles.foodTypeCard,
-                      ...(foodType === 'nonveg' && styles.foodTypeCardSelected)
-                    }}
-                    onClick={() => setFoodType('nonveg')}
-                  >
-                    <div style={styles.foodTypeIcon}>🍗</div>
-                    <div style={styles.foodTypeLabel}>Non-Veg</div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Donate To - NEW FIELD */}
-{/* Donate To - UPDATED FOR HORIZONTAL */}
-<div style={styles.formGroup}>
-  <label style={styles.formLabel}>Donate To</label>
-  <div style={styles.donateToContainerHorizontal}>
-    {donateToOptions.map(option => (
-      <div
-        key={option.id}
-        style={{
-          ...styles.donateToCardHorizontal,
-          ...(targetReceiverType === option.id && styles.donateToCardSelected)
-        }}
-        onClick={() => setTargetReceiverType(option.id)}
-      >
-        <div style={styles.donateToIconSmall}>{option.icon}</div>
-        <div style={styles.donateToLabelSmall}>{option.label}</div>
-        {targetReceiverType === option.id && (
-          <div style={styles.checkmarkSmall}>✓</div>
-        )}
-      </div>
-    ))}
-  </div>
-</div>
-
-
-              {/* Food Image Upload */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>Food Image (Optional)</label>
-                <div style={styles.imageUploadContainer}>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    style={{ display: 'none' }}
-                    id="food-image-input"
-                  />
-                  <label htmlFor="food-image-input" style={styles.imageUploadLabel}>
-                    {imagePreview ? (
-                      <img src={imagePreview} alt="Preview" style={styles.imagePreview} />
-                    ) : (
-                      <div style={styles.imageUploadPlaceholder}>
-                        <div style={styles.uploadIcon}>📷</div>
-                        <div>Click to upload food image</div>
-                      </div>
-                    )}
-                  </label>
-                </div>
-              </div>
-
-              {/* Food Items */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>Food Items</label>
-                {foodItems.map((item, index) => (
-                  <div key={index} style={styles.foodItemRow}>
-                    <div style={styles.foodItemInputs}>
-                      <input 
-                        type="text"
-                        style={{ ...styles.formInput, flex: 2 }}
-                        placeholder="Dish name (e.g., Biryani)"
-                        value={item.dishName}
-                        onChange={(e) => updateFoodItem(index, 'dishName', e.target.value)}
-                      />
-                      <input 
-                        type="text"
-                        style={{ ...styles.formInput, flex: 1 }}
-                        placeholder="Qty (e.g., 5 plates)"
-                        value={item.quantity}
-                        onChange={(e) => updateFoodItem(index, 'quantity', e.target.value)}
-                      />
-                    </div>
-                    {foodItems.length > 1 && (
-                      <button 
-                        style={styles.removeBtn}
-                        onClick={() => removeFoodItem(index)}
-                      >
-                        ✕
-                      </button>
-                    )}
-                  </div>
-                ))}
-                
-                <button style={styles.addBtn} onClick={addFoodItem}>
-                  <span style={styles.addBtnIcon}>+</span>
-                  <span>Add More Food Items</span>
-                </button>
-              </div>
-
-              <div style={styles.btnGroup}>
-                <button style={styles.btnSecondary} onClick={handleBack}>Cancel</button>
-                <button 
-                  style={{
-                    ...styles.btnPrimary,
-                    opacity: isStep1Valid() ? 1 : 0.5,
-                    cursor: isStep1Valid() ? 'pointer' : 'not-allowed'
-                  }}
-                  disabled={!isStep1Valid()}
-                  onClick={goToLocationStep}
-                >
-                  Next
-                </button>
-              </div>
-            </div>
+    <div style={styles.container}>
+      {/* Header - Matching ReceiverHome */}
+      <header style={styles.header}>
+        <div style={styles.headerContent}>
+          <div style={styles.headerLeft}>
+            <button style={styles.backButton} onClick={handleBack}>
+              <span style={styles.backIcon}>←</span>
+              <span style={styles.backText}>Back</span>
+            </button>
           </div>
-        )}
+          <h1 style={{...styles.pageTitle, ...(isMobile && styles.pageTitleMobile)}}>
+            Donate Food
+          </h1>
+        </div>
+      </header>
 
-        {/* Step 2: Location with Google Maps */}
-        {currentStep === 2 && (
-          <div style={styles.stepContent}>
-            <div style={styles.formCard}>
-              <h2 style={styles.formTitle}>Pickup Location</h2>
-              <p style={styles.formSubtitle}>Where can the food be collected from?</p>
+      {/* Main Content */}
+      <main style={styles.main}>
+        <div style={styles.contentWrapper}>
+          {/* Step 1: Food Details */}
+          {currentStep === 1 && (
+            <div style={styles.stepContent}>
+              <div style={styles.card}>
+                <h2 style={styles.cardTitle}>Food Details</h2>
+                <p style={styles.cardSubtitle}>Tell us what you're donating</p>
+                
+                {/* Food Type */}
+                <div style={styles.formGroup}>
+                  <label style={styles.formLabel}>Food Type</label>
+                  <div style={{...styles.foodTypeGrid, ...(isMobile && styles.foodTypeGridMobile)}}>
+                    <FoodTypeCard 
+                      icon="🥗"
+                      label="Vegetarian"
+                      selected={foodType === 'veg'}
+                      onClick={() => setFoodType('veg')}
+                    />
+                    <FoodTypeCard 
+                      icon="🍗"
+                      label="Non-Veg"
+                      selected={foodType === 'nonveg'}
+                      onClick={() => setFoodType('nonveg')}
+                    />
+                  </div>
+                </div>
 
-              {/* Address Search */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>Search Address</label>
-                <div style={styles.searchContainer}>
-                  <input
-                    type="text"
-                    style={styles.searchInput}
-                    placeholder="Enter address to search..."
-                    value={searchAddress}
-                    onChange={(e) => setSearchAddress(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && searchLocation()}
-                  />
-                  <button style={styles.searchBtn} onClick={searchLocation}>
-                    🔍
+                {/* Donate To */}
+                <div style={styles.formGroup}>
+                  <label style={styles.formLabel}>Donate To</label>
+                  <div style={{...styles.donateToGrid, ...(isMobile && styles.donateToGridMobile)}}>
+                    {donateToOptions.map(option => (
+                      <DonateToCard
+                        key={option.id}
+                        icon={option.icon}
+                        label={option.label}
+                        selected={targetReceiverType === option.id}
+                        onClick={() => setTargetReceiverType(option.id)}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Food Image Upload */}
+                <div style={styles.formGroup}>
+                  <label style={styles.formLabel}>Food Image (Optional)</label>
+                  <div style={styles.imageUploadContainer}>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      style={{ display: 'none' }}
+                      id="food-image-input"
+                    />
+                    <label htmlFor="food-image-input" style={styles.imageUploadLabel}>
+                      {imagePreview ? (
+                        <img src={imagePreview} alt="Preview" style={styles.imagePreview} />
+                      ) : (
+                        <div style={styles.imageUploadPlaceholder}>
+                          <div style={styles.uploadIcon}>📷</div>
+                          <div style={styles.uploadText}>Click to upload food image</div>
+                        </div>
+                      )}
+                    </label>
+                  </div>
+                </div>
+
+                {/* Food Items */}
+                <div style={styles.formGroup}>
+                  <label style={styles.formLabel}>Food Items</label>
+                  {foodItems.map((item, index) => (
+                    <FoodItemRow
+                      key={index}
+                      item={item}
+                      index={index}
+                      onUpdate={updateFoodItem}
+                      onRemove={removeFoodItem}
+                      canRemove={foodItems.length > 1}
+                      isMobile={isMobile}
+                    />
+                  ))}
+                  
+                  <button style={styles.addButton} onClick={addFoodItem}>
+                    <span style={styles.addButtonIcon}>+</span>
+                    <span>Add More Food Items</span>
+                  </button>
+                </div>
+
+                <div style={{...styles.buttonGroup, ...(isMobile && styles.buttonGroupMobile)}}>
+                  <button style={{...styles.btnSecondary, ...(isMobile && styles.btnMobile)}} onClick={handleBack}>
+                    Cancel
+                  </button>
+                  <button 
+                    style={{
+                      ...styles.btnPrimary,
+                      ...(isMobile && styles.btnMobile),
+                      opacity: isStep1Valid() ? 1 : 0.5,
+                      cursor: isStep1Valid() ? 'pointer' : 'not-allowed'
+                    }}
+                    disabled={!isStep1Valid()}
+                    onClick={goToLocationStep}
+                  >
+                    Next
                   </button>
                 </div>
               </div>
-
-              {/* Google Map */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>Pin Location (Click on map or drag marker)</label>
-                <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-                  <GoogleMap
-                    mapContainerStyle={mapContainerStyle}
-                    center={mapCenter}
-                    zoom={15}
-                    onClick={onMapClick}
-                    onLoad={setMap}
-                  >
-                    {marker && (
-                      <Marker
-                        position={marker}
-                        draggable={true}
-                        onDragEnd={(e) => {
-                          const lat = e.latLng.lat();
-                          const lng = e.latLng.lng();
-                          setMarker({ lat, lng });
-                          setLocationData(prev => ({
-                            ...prev,
-                            latitude: lat,
-                            longitude: lng
-                          }));
-                          reverseGeocode(lat, lng);
-                        }}
-                      />
-                    )}
-                  </GoogleMap>
-                </LoadScript>
-                <button 
-                  style={styles.gpsBtn}
-                  onClick={getCurrentLocation}
-                >
-                  📍 Use Current Location
-                </button>
-              </div>
-
-              {/* Address Display */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>Selected Address</label>
-                <textarea
-                  style={styles.formTextarea}
-                  value={locationData.address}
-                  onChange={(e) => setLocationData({ ...locationData, address: e.target.value })}
-                  placeholder="Address will appear here..."
-                />
-              </div>
-
-              {/* Contact Number */}
-              <div style={styles.formGroup}>
-                <label style={styles.formLabel}>Contact Number</label>
-                <input 
-                  type="tel"
-                  style={styles.formInput}
-                  placeholder="e.g., 9876543210"
-                  maxLength="10"
-                  value={locationData.phone}
-                  onChange={(e) => setLocationData({ ...locationData, phone: e.target.value })}
-                />
-              </div>
-
-              <div style={styles.btnGroup}>
-                <button style={styles.btnSecondary} onClick={handleBack}>Back</button>
-                <button 
-                  style={{
-                    ...styles.btnPrimary,
-                    opacity: isStep2Valid() ? 1 : 0.5,
-                    cursor: isStep2Valid() ? 'pointer' : 'not-allowed'
-                  }}
-                  disabled={!isStep2Valid() || loading}
-                  onClick={submitDonation}
-                >
-                  {loading ? 'Submitting...' : 'Submit Donation'}
-                </button>
-              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Success Screen */}
-        {currentStep === 3 && (
-          <div style={styles.stepContent}>
-            <div style={styles.formCard}>
-              <div style={styles.successContainer}>
-                <div style={styles.successIcon}>🎉</div>
-                <h2 style={styles.successTitle}>Donation Submitted!</h2>
-                <p style={styles.successText}>
-                  Thank you for your generosity. Your food donation has been registered and will be visible to receivers nearby.
-                </p>
+          {/* Step 2: Location */}
+          {currentStep === 2 && (
+            <div style={styles.stepContent}>
+              <div style={styles.card}>
+                <h2 style={styles.cardTitle}>Pickup Location</h2>
+                <p style={styles.cardSubtitle}>Where can the food be collected from?</p>
 
-                <div style={styles.donationSummary}>
-                  <div style={styles.summaryItem}>
-                    <span style={styles.summaryLabel}>Food Type:</span>
-                    <span style={styles.summaryValue}>
-                      {foodType === 'veg' ? '🥗 Vegetarian' : '🍗 Non-Vegetarian'}
-                    </span>
-                  </div>
-                  <div style={styles.summaryItem}>
-                    <span style={styles.summaryLabel}>Donate To:</span>
-                    <span style={styles.summaryValue}>
-                      {targetReceiverType === 'individual' && '👤 Individual'}
-                      {targetReceiverType === 'ngo' && '🏢 Organizations'}
-                      {targetReceiverType === 'both' && '🤝 Anyone'}
-                    </span>
-                  </div>
-                  <div style={styles.summaryItem}>
-                    <span style={styles.summaryLabel}>Items:</span>
-                    <span style={styles.summaryValue}>{foodItems.length} dish(es)</span>
-                  </div>
-                  {foodItems.map((item, idx) => (
-                    <div key={idx} style={styles.summaryItem}>
-                      <span style={styles.summaryLabel}>• {item.dishName}:</span>
-                      <span style={styles.summaryValue}>{item.quantity}</span>
-                    </div>
-                  ))}
-                  <div style={styles.summaryItem}>
-                    <span style={styles.summaryLabel}>Location:</span>
-                    <span style={styles.summaryValue}>{locationData.address.substring(0, 50)}...</span>
+                {/* Address Search */}
+                <div style={styles.formGroup}>
+                  <label style={styles.formLabel}>Search Address</label>
+                  <div style={styles.searchContainer}>
+                    <input
+                      type="text"
+                      style={{...styles.searchInput, ...(isMobile && styles.searchInputMobile)}}
+                      placeholder="Enter address to search..."
+                      value={searchAddress}
+                      onChange={(e) => setSearchAddress(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && searchLocation()}
+                    />
+                    <button style={{...styles.searchButton, ...(isMobile && styles.searchButtonMobile)}} onClick={searchLocation}>
+                      🔍
+                    </button>
                   </div>
                 </div>
 
-                <button 
-                  style={{ ...styles.btnPrimary, width: '100%' }}
-                  onClick={handleDone}
-                >
-                  Done
-                </button>
+                {/* Google Map */}
+                <div style={styles.formGroup}>
+                  <label style={styles.formLabel}>Pin Location (Click on map or drag marker)</label>
+                  <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+                    <GoogleMap
+                      mapContainerStyle={mapContainerStyle}
+                      center={mapCenter}
+                      zoom={15}
+                      onClick={onMapClick}
+                      onLoad={setMap}
+                    >
+                      {marker && (
+                        <Marker
+                          position={marker}
+                          draggable={true}
+                          onDragEnd={(e) => {
+                            const lat = e.latLng.lat();
+                            const lng = e.latLng.lng();
+                            setMarker({ lat, lng });
+                            setLocationData(prev => ({
+                              ...prev,
+                              latitude: lat,
+                              longitude: lng
+                            }));
+                            reverseGeocode(lat, lng);
+                          }}
+                        />
+                      )}
+                    </GoogleMap>
+                  </LoadScript>
+                  <button style={styles.gpsButton} onClick={getCurrentLocation}>
+                    📍 Use Current Location
+                  </button>
+                </div>
+
+                {/* Address Display */}
+                <div style={styles.formGroup}>
+                  <label style={styles.formLabel}>Selected Address</label>
+                  <textarea
+                    style={styles.formTextarea}
+                    value={locationData.address}
+                    onChange={(e) => setLocationData({ ...locationData, address: e.target.value })}
+                    placeholder="Address will appear here..."
+                  />
+                </div>
+
+                {/* Contact Number */}
+                <div style={styles.formGroup}>
+                  <label style={styles.formLabel}>Contact Number</label>
+                  <input 
+                    type="tel"
+                    style={styles.formInput}
+                    placeholder="e.g., 9876543210"
+                    maxLength="10"
+                    value={locationData.phone}
+                    onChange={(e) => setLocationData({ ...locationData, phone: e.target.value })}
+                  />
+                </div>
+
+                <div style={{...styles.buttonGroup, ...(isMobile && styles.buttonGroupMobile)}}>
+                  <button style={{...styles.btnSecondary, ...(isMobile && styles.btnMobile)}} onClick={handleBack}>
+                    Back
+                  </button>
+                  <button 
+                    style={{
+                      ...styles.btnPrimary,
+                      ...(isMobile && styles.btnMobile),
+                      opacity: isStep2Valid() ? 1 : 0.5,
+                      cursor: isStep2Valid() ? 'pointer' : 'not-allowed'
+                    }}
+                    disabled={!isStep2Valid() || loading}
+                    onClick={submitDonation}
+                  >
+                    {loading ? 'Submitting...' : 'Submit Donation'}
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )}
+
+          {/* Success Screen */}
+          {currentStep === 3 && (
+            <div style={styles.stepContent}>
+              <div style={styles.card}>
+                <div style={styles.successContainer}>
+                  <div style={styles.successIcon}>🎉</div>
+                  <h2 style={styles.successTitle}>Donation Submitted!</h2>
+                  <p style={styles.successText}>
+                    Thank you for your generosity. Your food donation has been registered and will be visible to receivers nearby.
+                  </p>
+
+                  <div style={styles.summaryCard}>
+                    <SummaryItem label="Food Type:" value={foodType === 'veg' ? '🥗 Vegetarian' : '🍗 Non-Vegetarian'} />
+                    <SummaryItem 
+                      label="Donate To:" 
+                      value={
+                        targetReceiverType === 'individual' ? '👤 Individual' :
+                        targetReceiverType === 'ngo' ? '🏢 Organizations' : '🤝 Anyone'
+                      } 
+                    />
+                    <SummaryItem label="Items:" value={`${foodItems.length} dish(es)`} />
+                    {foodItems.map((item, idx) => (
+                      <SummaryItem key={idx} label={`• ${item.dishName}:`} value={item.quantity} />
+                    ))}
+                    <SummaryItem label="Location:" value={`${locationData.address.substring(0, 50)}...`} />
+                  </div>
+
+                  <button 
+                    style={{ ...styles.btnPrimary, width: '100%' }}
+                    onClick={handleDone}
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 };
 
+// Helper Components
+const FoodTypeCard = ({ icon, label, selected, onClick }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  return (
+    <div
+      style={{
+        ...styles.selectionCard,
+        ...(selected && styles.selectionCardSelected),
+        transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+      }}
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div style={styles.selectionIcon}>{icon}</div>
+      <div style={styles.selectionLabel}>{label}</div>
+    </div>
+  );
+};
+
+const DonateToCard = ({ icon, label, selected, onClick }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  return (
+    <div
+      style={{
+        ...styles.donateToCard,
+        ...(selected && styles.donateToCardSelected),
+        transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
+      }}
+      onClick={onClick}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div style={styles.donateToIcon}>{icon}</div>
+      <div style={styles.donateToLabel}>{label}</div>
+      {selected && <div style={styles.checkmark}>✓</div>}
+    </div>
+  );
+};
+
+const FoodItemRow = ({ item, index, onUpdate, onRemove, canRemove, isMobile }) => (
+  <div style={{...styles.foodItemRow, ...(isMobile && styles.foodItemRowMobile)}}>
+    <div style={styles.foodItemInputs}>
+      <input 
+        type="text"
+        style={{ ...styles.formInput, ...styles.formInputFlex2, ...(isMobile && styles.formInputMobile) }}
+        placeholder="Dish name"
+        value={item.dishName}
+        onChange={(e) => onUpdate(index, 'dishName', e.target.value)}
+      />
+      <input 
+        type="text"
+        style={{ ...styles.formInput, ...styles.formInputFlex1, ...(isMobile && styles.formInputMobile) }}
+        placeholder="Quantity"
+        value={item.quantity}
+        onChange={(e) => onUpdate(index, 'quantity', e.target.value)}
+      />
+    </div>
+    {canRemove && (
+      <button style={styles.removeButton} onClick={() => onRemove(index)}>
+        ✕
+      </button>
+    )}
+  </div>
+);
+
+const SummaryItem = ({ label, value }) => (
+  <div style={styles.summaryRow}>
+    <span style={styles.summaryLabel}>{label}</span>
+    <span style={styles.summaryValue}>{value}</span>
+  </div>
+);
+
 const styles = {
   container: {
     minHeight: '100vh',
-    background: '#F9F9F9',
+    background: '#FAFBFC',
   },
+  
+  // Header - Matching ReceiverHome
   header: {
-    background: COLORS.primary,
-    color: 'white',
-    padding: '20px',
+    background: '#FFFFFF',
+    borderBottom: '1px solid #E5E7EB',
+    position: 'sticky',
+    top: 0,
+    zIndex: 100,
+    boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
   },
-  backBtn: {
-    background: 'transparent',
-    border: 'none',
-    color: 'white',
-    fontSize: FONT_SIZES.md,
-    cursor: 'pointer',
+  headerContent: {
+    maxWidth: '1200px',
+    margin: '0 auto',
+    padding: '16px 24px',
+  },
+  headerLeft: {
     marginBottom: '8px',
   },
-  title: {
-    fontSize: FONT_SIZES.xl,
-    fontWeight: 'bold',
+  backButton: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    background: 'transparent',
+    border: 'none',
+    color: '#7C9D3D',
+    fontSize: '15px',
+    fontWeight: '500',
+    cursor: 'pointer',
+    padding: '6px 12px',
+    borderRadius: '6px',
+    transition: 'all 0.2s ease',
   },
-  content: {
-    padding: '20px',
+  backIcon: {
+    fontSize: '18px',
+  },
+  backText: {
+    fontSize: '15px',
+  },
+  pageTitle: {
+    fontSize: '24px',
+    fontWeight: '700',
+    color: '#1F2937',
+    letterSpacing: '-0.02em',
+    margin: 0,
+  },
+  pageTitleMobile: {
+    fontSize: '20px',
+  },
+  
+  // Main Content
+  main: {
+    padding: '24px 16px',
+  },
+  contentWrapper: {
     maxWidth: '800px',
     margin: '0 auto',
   },
   stepContent: {
     animation: 'fadeIn 0.3s ease',
   },
-  formCard: {
-    background: 'white',
-    borderRadius: '12px',
+  card: {
+    background: '#FFFFFF',
+    borderRadius: '10px',
     padding: '24px',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    border: '1px solid #E5E7EB',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
   },
-  formTitle: {
-    fontSize: FONT_SIZES.lg,
+  cardTitle: {
+    fontSize: '20px',
     fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: '8px',
+    color: '#1F2937',
+    marginBottom: '6px',
+    letterSpacing: '-0.01em',
   },
-  formSubtitle: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textLight,
-    marginBottom: '20px',
+  cardSubtitle: {
+    fontSize: '14px',
+    color: '#6B7280',
+    marginBottom: '24px',
   },
+  
+  // Form Elements
   formGroup: {
-    marginBottom: '20px',
+    marginBottom: '24px',
   },
   formLabel: {
     display: 'block',
-    fontSize: FONT_SIZES.sm,
+    fontSize: '14px',
     fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: '8px',
+    color: '#1F2937',
+    marginBottom: '10px',
   },
+  formInput: {
+    width: '100%',
+    padding: '12px 14px',
+    fontSize: '15px',
+    color: '#1F2937',
+    background: '#FFFFFF',
+    border: '1px solid #E5E7EB',
+    borderRadius: '8px',
+    transition: 'border-color 0.2s ease',
+    fontFamily: 'inherit',
+  },
+  formInputMobile: {
+    fontSize: '14px',
+    padding: '10px 12px',
+  },
+  formInputFlex2: {
+    flex: 2,
+  },
+  formInputFlex1: {
+    flex: 1,
+  },
+  formTextarea: {
+    width: '100%',
+    padding: '12px 14px',
+    fontSize: '15px',
+    color: '#1F2937',
+    background: '#FFFFFF',
+    border: '1px solid #E5E7EB',
+    borderRadius: '8px',
+    resize: 'vertical',
+    minHeight: '100px',
+    fontFamily: 'inherit',
+  },
+  
+  // Selection Cards
   foodTypeGrid: {
     display: 'grid',
-    gridTemplateColumns: '1fr 1fr',
+    gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '12px',
   },
-  foodTypeCard: {
-    background: 'white',
-    border: `2px solid ${COLORS.border}`,
-    borderRadius: '12px',
-    padding: '16px',
+  foodTypeGridMobile: {
+    gap: '10px',
+  },
+  selectionCard: {
+    background: '#FFFFFF',
+    border: '2px solid #E5E7EB',
+    borderRadius: '10px',
+    padding: '20px',
     textAlign: 'center',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.2s ease',
   },
-  foodTypeCardSelected: {
-    borderColor: COLORS.primary,
-    background: '#F5F7F0',
+  selectionCardSelected: {
+    borderColor: '#7C9D3D',
+    background: 'rgba(124, 157, 61, 0.04)',
   },
-  foodTypeIcon: {
-    fontSize: '32px',
-    marginBottom: '4px',
+  selectionIcon: {
+    fontSize: '36px',
+    marginBottom: '8px',
   },
-  foodTypeLabel: {
-    fontSize: FONT_SIZES.sm,
+  selectionLabel: {
+    fontSize: '14px',
     fontWeight: '600',
-    color: COLORS.text,
+    color: '#1F2937',
   },
-   // NEW: Horizontal layout for "Donate To"
-  donateToContainerHorizontal: {
+  
+  // Donate To Cards
+  donateToGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, 1fr)',
     gap: '12px',
   },
-  donateToCardHorizontal: {
-    background: 'white',
-    border: `2px solid ${COLORS.border}`,
-    borderRadius: '12px',
+  donateToGridMobile: {
+    gap: '10px',
+  },
+  donateToCard: {
+    background: '#FFFFFF',
+    border: '2px solid #E5E7EB',
+    borderRadius: '10px',
     padding: '16px 12px',
     cursor: 'pointer',
-    transition: 'all 0.3s ease',
+    transition: 'all 0.2s ease',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -647,31 +775,37 @@ const styles = {
     position: 'relative',
     minHeight: '100px',
   },
-  donateToIconSmall: {
-    fontSize: '32px',
+  donateToCardSelected: {
+    borderColor: '#7C9D3D',
+    background: 'rgba(124, 157, 61, 0.04)',
+  },
+  donateToIcon: {
+    fontSize: '28px',
     marginBottom: '8px',
   },
-  donateToLabelSmall: {
-    fontSize: FONT_SIZES.xs,
+  donateToLabel: {
+    fontSize: '12px',
     fontWeight: '600',
-    color: COLORS.text,
+    color: '#1F2937',
     textAlign: 'center',
   },
-  checkmarkSmall: {
+  checkmark: {
     position: 'absolute',
     top: '8px',
     right: '8px',
     width: '20px',
     height: '20px',
-    borderRadius: '10px',
-    background: COLORS.primary,
-    color: 'white',
+    borderRadius: '50%',
+    background: '#7C9D3D',
+    color: '#FFFFFF',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
     fontSize: '12px',
-    fontWeight: 'bold',
+    fontWeight: '700',
   },
+  
+  // Image Upload
   imageUploadContainer: {
     width: '100%',
   },
@@ -679,11 +813,12 @@ const styles = {
     display: 'block',
     width: '100%',
     minHeight: '200px',
-    border: `2px dashed ${COLORS.border}`,
-    borderRadius: '12px',
+    border: '2px dashed #E5E7EB',
+    borderRadius: '10px',
     cursor: 'pointer',
     overflow: 'hidden',
-    background: '#F9F9F9',
+    background: '#F9FAFB',
+    transition: 'border-color 0.2s ease',
   },
   imagePreview: {
     width: '100%',
@@ -696,63 +831,53 @@ const styles = {
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: '200px',
-    color: COLORS.textLight,
+    color: '#6B7280',
   },
   uploadIcon: {
     fontSize: '48px',
     marginBottom: '12px',
+    opacity: 0.6,
   },
+  uploadText: {
+    fontSize: '14px',
+  },
+  
+  // Food Items
   foodItemRow: {
     display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
+    alignItems: 'flex-start',
+    gap: '10px',
     marginBottom: '12px',
+  },
+  foodItemRowMobile: {
+    flexDirection: 'column',
+    gap: '8px',
   },
   foodItemInputs: {
     display: 'flex',
-    gap: '8px',
+    gap: '10px',
     flex: 1,
   },
-  formInput: {
-    padding: '12px 16px',
-    fontSize: FONT_SIZES.md,
-    color: COLORS.text,
-    background: 'white',
-    border: `1px solid ${COLORS.border}`,
+  removeButton: {
+    width: '40px',
+    height: '40px',
     borderRadius: '8px',
-    width: '100%',
-  },
-  formTextarea: {
-    width: '100%',
-    padding: '12px 16px',
-    fontSize: FONT_SIZES.md,
-    color: COLORS.text,
-    background: 'white',
-    border: `1px solid ${COLORS.border}`,
-    borderRadius: '8px',
-    resize: 'vertical',
-    minHeight: '80px',
-    fontFamily: 'inherit',
-  },
-  removeBtn: {
-    width: '36px',
-    height: '36px',
-    borderRadius: '8px',
-    border: `2px solid ${COLORS.error}`,
-    background: 'white',
-    color: COLORS.error,
-    fontSize: '18px',
+    border: '2px solid #EF4444',
+    background: '#FFFFFF',
+    color: '#EF4444',
+    fontSize: '16px',
     cursor: 'pointer',
     flexShrink: 0,
+    transition: 'all 0.2s ease',
   },
-  addBtn: {
+  addButton: {
     width: '100%',
     padding: '12px',
     borderRadius: '8px',
-    border: `2px dashed ${COLORS.primary}`,
-    background: 'rgba(112, 130, 56, 0.05)',
-    color: COLORS.primary,
-    fontSize: FONT_SIZES.sm,
+    border: '2px dashed #7C9D3D',
+    background: 'rgba(124, 157, 61, 0.04)',
+    color: '#7C9D3D',
+    fontSize: '14px',
     fontWeight: '600',
     cursor: 'pointer',
     display: 'flex',
@@ -760,108 +885,139 @@ const styles = {
     justifyContent: 'center',
     gap: '8px',
     marginTop: '8px',
+    transition: 'all 0.2s ease',
   },
-  addBtnIcon: {
-    fontSize: '20px',
+  addButtonIcon: {
+    fontSize: '18px',
   },
+  
+  // Search
   searchContainer: {
     display: 'flex',
-    gap: '8px',
+    gap: '10px',
   },
   searchInput: {
     flex: 1,
-    padding: '12px 16px',
-    fontSize: FONT_SIZES.md,
-    border: `1px solid ${COLORS.border}`,
+    padding: '12px 14px',
+    fontSize: '15px',
+    border: '1px solid #E5E7EB',
     borderRadius: '8px',
   },
-  searchBtn: {
-    padding: '12px 20px',
-    background: COLORS.primary,
-    color: 'white',
+  searchInputMobile: {
+    fontSize: '14px',
+    padding: '10px 12px',
+  },
+  searchButton: {
+    padding: '12px 18px',
+    background: '#7C9D3D',
+    color: '#FFFFFF',
     border: 'none',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: '20px',
+    fontSize: '18px',
+    transition: 'all 0.2s ease',
   },
-  gpsBtn: {
+  searchButtonMobile: {
+    padding: '10px 16px',
+    fontSize: '16px',
+  },
+  gpsButton: {
     width: '100%',
     marginTop: '12px',
     padding: '12px',
-    background: COLORS.secondary,
-    color: COLORS.text,
-    border: 'none',
+    background: '#F9FAFB',
+    color: '#1F2937',
+    border: '1px solid #E5E7EB',
     borderRadius: '8px',
     cursor: 'pointer',
-    fontSize: FONT_SIZES.sm,
+    fontSize: '14px',
     fontWeight: '600',
+    transition: 'all 0.2s ease',
   },
-  btnGroup: {
+  
+  // Buttons
+  buttonGroup: {
     display: 'flex',
     gap: '12px',
     marginTop: '24px',
   },
+  buttonGroupMobile: {
+    flexDirection: 'column',
+  },
   btnPrimary: {
     flex: 1,
-    padding: '14px 24px',
+    padding: '14px 20px',
     borderRadius: '8px',
-    fontSize: FONT_SIZES.md,
+    fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',
     border: 'none',
-    background: COLORS.primary,
-    color: 'white',
+    background: '#7C9D3D',
+    color: '#FFFFFF',
+    transition: 'all 0.2s ease',
   },
   btnSecondary: {
     flex: 1,
-    padding: '14px 24px',
+    padding: '14px 20px',
     borderRadius: '8px',
-    fontSize: FONT_SIZES.md,
+    fontSize: '15px',
     fontWeight: '600',
     cursor: 'pointer',
-    background: 'white',
-    color: COLORS.text,
-    border: `2px solid ${COLORS.border}`,
+    background: '#FFFFFF',
+    color: '#1F2937',
+    border: '1px solid #E5E7EB',
+    transition: 'all 0.2s ease',
   },
+  btnMobile: {
+    padding: '12px 16px',
+    fontSize: '14px',
+  },
+  
+  // Success Screen
   successContainer: {
     textAlign: 'center',
-    padding: '40px 20px',
+    padding: '20px',
   },
   successIcon: {
-    fontSize: '80px',
+    fontSize: '72px',
     marginBottom: '20px',
+    animation: 'scaleIn 0.5s ease',
   },
   successTitle: {
-    fontSize: FONT_SIZES.xl,
-    fontWeight: 'bold',
-    color: COLORS.text,
+    fontSize: '24px',
+    fontWeight: '700',
+    color: '#1F2937',
     marginBottom: '12px',
+    letterSpacing: '-0.01em',
   },
   successText: {
-    fontSize: FONT_SIZES.md,
-    color: COLORS.textLight,
+    fontSize: '15px',
+    color: '#6B7280',
     marginBottom: '24px',
+    lineHeight: '1.6',
   },
-  donationSummary: {
-    background: 'rgba(112, 130, 56, 0.05)',
-    border: `2px solid ${COLORS.primary}`,
-    borderRadius: '12px',
+  summaryCard: {
+    background: 'rgba(124, 157, 61, 0.04)',
+    border: '1px solid #7C9D3D',
+    borderRadius: '10px',
     padding: '20px',
     margin: '24px 0',
     textAlign: 'left',
   },
-  summaryItem: {
+  summaryRow: {
     display: 'flex',
     justifyContent: 'space-between',
     marginBottom: '12px',
-    fontSize: FONT_SIZES.sm,
+    fontSize: '14px',
   },
   summaryLabel: {
-    color: COLORS.textLight,
+    color: '#6B7280',
+    fontWeight: '500',
   },
   summaryValue: {
     fontWeight: '600',
-    color: COLORS.text,
+    color: '#1F2937',
+    textAlign: 'right',
   },
 };
 
