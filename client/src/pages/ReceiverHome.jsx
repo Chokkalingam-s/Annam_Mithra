@@ -1,13 +1,14 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { signOut } from 'firebase/auth';
-import { auth } from '../config/firebase';
-import Button from '../components/Button';
-import { COLORS, SPACING, FONT_SIZES } from '../config/theme';
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../config/firebase";
+import Button from "../components/Button";
+import { COLORS, SPACING, FONT_SIZES } from "../config/theme";
+import TestNotificationButton from "../components/TestNotificationButton";
 
 const ReceiverHome = () => {
   const navigate = useNavigate();
-  const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+  const profile = JSON.parse(localStorage.getItem("userProfile") || "{}");
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -19,22 +20,22 @@ const ReceiverHome = () => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   const handleSignOut = async () => {
-    if (window.confirm('Are you sure you want to logout?')) {
+    if (window.confirm("Are you sure you want to logout?")) {
       await signOut(auth);
       localStorage.clear();
-      navigate('/');
+      navigate("/");
     }
   };
 
   const handleProfileClick = () => {
-    navigate('/profile');
+    navigate("/profile");
     setShowDropdown(false);
   };
 
@@ -44,8 +45,8 @@ const ReceiverHome = () => {
 
   // Get user's initials for avatar
   const getInitials = (name) => {
-    if (!name) return '?';
-    const names = name.trim().split(' ');
+    if (!name) return "?";
+    const names = name.trim().split(" ");
     if (names.length >= 2) {
       return (names[0][0] + names[names.length - 1][0]).toUpperCase();
     }
@@ -54,6 +55,7 @@ const ReceiverHome = () => {
 
   return (
     <div className="page" style={styles.container}>
+      <TestNotificationButton />
       {/* Header */}
       <div style={styles.header}>
         <div style={styles.headerTop}>
@@ -61,11 +63,13 @@ const ReceiverHome = () => {
             <h1 style={styles.greeting}>Hello, {profile.name}! 👋</h1>
             <p style={styles.subGreeting}>Welcome to Annam Mithra</p>
           </div>
-          
+
           {/* Profile Dropdown */}
           <div style={styles.profileContainer} ref={dropdownRef}>
             <div style={styles.profileAvatar} onClick={toggleDropdown}>
-              <span style={styles.profileInitials}>{getInitials(profile.name)}</span>
+              <span style={styles.profileInitials}>
+                {getInitials(profile.name)}
+              </span>
             </div>
 
             {showDropdown && (
@@ -79,16 +83,19 @@ const ReceiverHome = () => {
                     <div style={styles.dropdownEmail}>{profile.email}</div>
                   </div>
                 </div>
-                
+
                 <div style={styles.dropdownDivider}></div>
-                
+
                 <div style={styles.dropdownMenu}>
                   <div style={styles.dropdownItem} onClick={handleProfileClick}>
                     <span style={styles.dropdownIcon}>👤</span>
                     <span>Profile</span>
                   </div>
-                  <div 
-                    style={{ ...styles.dropdownItem, ...styles.dropdownItemLogout }} 
+                  <div
+                    style={{
+                      ...styles.dropdownItem,
+                      ...styles.dropdownItemLogout,
+                    }}
                     onClick={handleSignOut}
                   >
                     <span style={styles.dropdownIcon}>🚪</span>
@@ -111,12 +118,14 @@ const ReceiverHome = () => {
       {/* Main Actions */}
       <div style={styles.section}>
         <h2 style={styles.sectionTitle}>Quick Actions</h2>
-        
-        <div style={styles.actionCard} onClick={() => navigate('/donate')}>
+
+        <div style={styles.actionCard} onClick={() => navigate("/donate")}>
           <div style={styles.actionIcon}>🤲</div>
           <div style={styles.actionContent}>
             <h3 style={styles.actionTitle}>Donate Food</h3>
-            <p style={styles.actionDesc}>Share your surplus food with those in need</p>
+            <p style={styles.actionDesc}>
+              Share your surplus food with those in need
+            </p>
           </div>
           <div style={styles.actionArrow}>→</div>
         </div>
@@ -125,7 +134,9 @@ const ReceiverHome = () => {
           <div style={styles.actionIcon}>🗺️</div>
           <div style={styles.actionContent}>
             <h3 style={styles.actionTitle}>Find Food Nearby</h3>
-            <p style={styles.actionDesc}>Discover available food in your area</p>
+            <p style={styles.actionDesc}>
+              Discover available food in your area
+            </p>
           </div>
           <div style={styles.actionArrow}>→</div>
         </div>
@@ -146,7 +157,9 @@ const ReceiverHome = () => {
         <div style={styles.emptyState}>
           <div style={styles.emptyIcon}>📭</div>
           <p style={styles.emptyText}>No activity yet</p>
-          <p style={styles.emptySubtext}>Start by donating or requesting food</p>
+          <p style={styles.emptySubtext}>
+            Start by donating or requesting food
+          </p>
         </div>
       </div>
     </div>
@@ -163,82 +176,82 @@ const StatCard = ({ icon, value, label }) => (
 
 const styles = {
   container: {
-    minHeight: '100vh',
-    background: '#F9F9F9',
+    minHeight: "100vh",
+    background: "#F9F9F9",
   },
   header: {
-    background: COLORS.primary || '#7C9D3D',
-    color: 'white',
-    padding: '20px',
+    background: COLORS.primary || "#7C9D3D",
+    color: "white",
+    padding: "20px",
   },
   headerTop: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
   },
   greeting: {
-    fontSize: FONT_SIZES.xl || '24px',
-    fontWeight: 'bold',
-    marginBottom: '4px',
+    fontSize: FONT_SIZES.xl || "24px",
+    fontWeight: "bold",
+    marginBottom: "4px",
   },
   subGreeting: {
-    fontSize: FONT_SIZES.sm || '14px',
+    fontSize: FONT_SIZES.sm || "14px",
     opacity: 0.9,
   },
-  
+
   // Profile Avatar & Dropdown Styles
   profileContainer: {
-    position: 'relative',
+    position: "relative",
   },
   profileAvatar: {
-    width: '40px',
-    height: '40px',
-    borderRadius: '50%',
-    background: 'rgba(255, 255, 255, 0.2)',
-    border: '2px solid rgba(255, 255, 255, 0.4)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    backdropFilter: 'blur(10px)',
+    width: "40px",
+    height: "40px",
+    borderRadius: "50%",
+    background: "rgba(255, 255, 255, 0.2)",
+    border: "2px solid rgba(255, 255, 255, 0.4)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    backdropFilter: "blur(10px)",
   },
   profileInitials: {
-    fontSize: '14px',
-    fontWeight: 'bold',
-    color: 'white',
-    userSelect: 'none',
+    fontSize: "14px",
+    fontWeight: "bold",
+    color: "white",
+    userSelect: "none",
   },
   dropdown: {
-    position: 'absolute',
-    top: '50px',
-    right: '0',
-    background: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
-    minWidth: '260px',
-    overflow: 'hidden',
+    position: "absolute",
+    top: "50px",
+    right: "0",
+    background: "white",
+    borderRadius: "12px",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.15)",
+    minWidth: "260px",
+    overflow: "hidden",
     zIndex: 1000,
-    animation: 'dropdownSlideIn 0.2s ease',
+    animation: "dropdownSlideIn 0.2s ease",
   },
   dropdownHeader: {
-    padding: '16px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    background: 'rgba(124, 157, 61, 0.05)',
+    padding: "16px",
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    background: "rgba(124, 157, 61, 0.05)",
   },
   dropdownAvatar: {
-    width: '48px',
-    height: '48px',
-    borderRadius: '50%',
-    background: COLORS.primary || '#7C9D3D',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    fontSize: '18px',
-    fontWeight: 'bold',
-    color: 'white',
+    width: "48px",
+    height: "48px",
+    borderRadius: "50%",
+    background: COLORS.primary || "#7C9D3D",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontSize: "18px",
+    fontWeight: "bold",
+    color: "white",
     flexShrink: 0,
   },
   dropdownUserInfo: {
@@ -246,136 +259,136 @@ const styles = {
     minWidth: 0,
   },
   dropdownName: {
-    fontSize: '15px',
-    fontWeight: '600',
-    color: COLORS.text || '#2C3E50',
-    marginBottom: '2px',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
+    fontSize: "15px",
+    fontWeight: "600",
+    color: COLORS.text || "#2C3E50",
+    marginBottom: "2px",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
   dropdownEmail: {
-    fontSize: '12px',
-    color: COLORS.textLight || '#7F8C8D',
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-    whiteSpace: 'nowrap',
+    fontSize: "12px",
+    color: COLORS.textLight || "#7F8C8D",
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
   dropdownDivider: {
-    height: '1px',
-    background: '#E0E0E0',
-    margin: '0',
+    height: "1px",
+    background: "#E0E0E0",
+    margin: "0",
   },
   dropdownMenu: {
-    padding: '8px',
+    padding: "8px",
   },
   dropdownItem: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '12px',
-    padding: '12px 16px',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-    fontSize: '14px',
-    fontWeight: '500',
-    color: COLORS.text || '#2C3E50',
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    padding: "12px 16px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    fontSize: "14px",
+    fontWeight: "500",
+    color: COLORS.text || "#2C3E50",
   },
   dropdownItemLogout: {
-    color: '#E74C3C',
+    color: "#E74C3C",
   },
   dropdownIcon: {
-    fontSize: '18px',
+    fontSize: "18px",
   },
-  
+
   // Existing styles
   statsContainer: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(3, 1fr)',
-    gap: '12px',
-    padding: '20px',
-    marginTop: '-20px',
+    display: "grid",
+    gridTemplateColumns: "repeat(3, 1fr)",
+    gap: "12px",
+    padding: "20px",
+    marginTop: "-20px",
   },
   statCard: {
-    background: 'white',
-    borderRadius: '12px',
-    padding: '16px',
-    textAlign: 'center',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+    background: "white",
+    borderRadius: "12px",
+    padding: "16px",
+    textAlign: "center",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
   },
   statIcon: {
-    fontSize: '32px',
-    marginBottom: '8px',
+    fontSize: "32px",
+    marginBottom: "8px",
   },
   statValue: {
-    fontSize: FONT_SIZES.xl || '24px',
-    fontWeight: 'bold',
-    color: COLORS.primary || '#7C9D3D',
-    marginBottom: '4px',
+    fontSize: FONT_SIZES.xl || "24px",
+    fontWeight: "bold",
+    color: COLORS.primary || "#7C9D3D",
+    marginBottom: "4px",
   },
   statLabel: {
-    fontSize: FONT_SIZES.xs || '12px',
-    color: COLORS.textLight || '#7F8C8D',
+    fontSize: FONT_SIZES.xs || "12px",
+    color: COLORS.textLight || "#7F8C8D",
   },
   section: {
-    padding: '20px',
+    padding: "20px",
   },
   sectionTitle: {
-    fontSize: FONT_SIZES.lg || '18px',
-    fontWeight: '600',
-    color: COLORS.text || '#2C3E50',
-    marginBottom: '16px',
+    fontSize: FONT_SIZES.lg || "18px",
+    fontWeight: "600",
+    color: COLORS.text || "#2C3E50",
+    marginBottom: "16px",
   },
   actionCard: {
-    background: 'white',
-    borderRadius: '12px',
-    padding: '16px',
-    marginBottom: '12px',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '16px',
-    cursor: 'pointer',
-    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-    transition: 'transform 0.2s',
+    background: "white",
+    borderRadius: "12px",
+    padding: "16px",
+    marginBottom: "12px",
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+    cursor: "pointer",
+    boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
+    transition: "transform 0.2s",
   },
   actionIcon: {
-    fontSize: '32px',
+    fontSize: "32px",
   },
   actionContent: {
     flex: 1,
   },
   actionTitle: {
-    fontSize: FONT_SIZES.md || '16px',
-    fontWeight: '600',
-    color: COLORS.text || '#2C3E50',
-    marginBottom: '4px',
+    fontSize: FONT_SIZES.md || "16px",
+    fontWeight: "600",
+    color: COLORS.text || "#2C3E50",
+    marginBottom: "4px",
   },
   actionDesc: {
-    fontSize: FONT_SIZES.xs || '12px',
-    color: COLORS.textLight || '#7F8C8D',
+    fontSize: FONT_SIZES.xs || "12px",
+    color: COLORS.textLight || "#7F8C8D",
   },
   actionArrow: {
-    fontSize: '20px',
-    color: COLORS.primary || '#7C9D3D',
+    fontSize: "20px",
+    color: COLORS.primary || "#7C9D3D",
   },
   emptyState: {
-    background: 'white',
-    borderRadius: '12px',
-    padding: '40px 20px',
-    textAlign: 'center',
+    background: "white",
+    borderRadius: "12px",
+    padding: "40px 20px",
+    textAlign: "center",
   },
   emptyIcon: {
-    fontSize: '48px',
-    marginBottom: '16px',
+    fontSize: "48px",
+    marginBottom: "16px",
   },
   emptyText: {
-    fontSize: FONT_SIZES.md || '16px',
-    color: COLORS.text || '#2C3E50',
-    marginBottom: '8px',
+    fontSize: FONT_SIZES.md || "16px",
+    color: COLORS.text || "#2C3E50",
+    marginBottom: "8px",
   },
   emptySubtext: {
-    fontSize: FONT_SIZES.sm || '14px',
-    color: COLORS.textLight || '#7F8C8D',
+    fontSize: FONT_SIZES.sm || "14px",
+    color: COLORS.textLight || "#7F8C8D",
   },
 };
 
