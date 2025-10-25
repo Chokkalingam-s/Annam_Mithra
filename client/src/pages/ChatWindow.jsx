@@ -20,7 +20,6 @@ const ChatWindow = () => {
   useEffect(() => {
     initializeChat();
     return () => {
-      // Cleanup: disconnect socket when component unmounts
       if (socketRef.current) {
         socketRef.current.disconnect();
       }
@@ -57,30 +56,14 @@ const ChatWindow = () => {
       setMessages(messagesResponse.data.data || []);
 
       // Initialize Socket.IO
-      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001';
-   // Inside initializeChat()
-socketRef.current = io(socketUrl, {
-  query: { firebaseUid, donationId, receiverId }
-});
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+      socketRef.current = io(socketUrl, {
+        transports: ['websocket'], // force WebSocket, avoid polling fallback issues
+        query: { firebaseUid, donationId, receiverId }
+      });
 
-socketRef.current.emit('join_chat', { donationId, receiverId });
-
-// Later in handleSendMessage()
-if (socketRef.current) {
-  socketRef.current.emit('send_message', {
-    ...response.data.data,
-    donationId,
-    receiverId,
-  });
-} else {
-  console.error('Socket not connected');
-}
-
-
-      // Join chat room
       socketRef.current.emit('join_chat', { donationId, receiverId });
 
-      // Listen for new messages
       socketRef.current.on('receive_message', (message) => {
         setMessages((prevMessages) => [...prevMessages, message]);
         scrollToBottom();
@@ -106,7 +89,7 @@ if (socketRef.current) {
 
     try {
       const token = await auth.currentUser?.getIdToken();
-      
+
       const messageData = {
         donationId: parseInt(donationId),
         receiverId: parseInt(receiverId),
@@ -114,19 +97,16 @@ if (socketRef.current) {
         firebaseUid: auth.currentUser?.uid
       };
 
-      // Send to backend
       const response = await api.post('/chat/send', messageData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      if (response.data.success) {
-        // Emit to socket for real-time update
+      if (response.data.success && socketRef.current) {
         socketRef.current.emit('send_message', {
           ...response.data.data,
           donationId,
           receiverId
         });
-
         setNewMessage('');
       }
     } catch (error) {
