@@ -1,65 +1,140 @@
-import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import chatService from "../../services/chatService";
-import { auth } from "../../config/firebase";
-import MessageBubble from "./MessageBubble";
-import ChatInput from "./ChatInput";
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { auth } from '../../config/firebase';
+import api from '../../services/api';
+import { COLORS, FONT_SIZES } from '../../config/theme';
+import io from 'socket.io-client';
 
-const ChatWindow = ({ chatId, chatDetails }) => {
-  const [messages, setMessages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const messagesEndRef = useRef(null);
+const ChatWindow = () => {
   const navigate = useNavigate();
-  const currentUserId = auth.currentUser?.uid;
+  const { donationId, receiverId } = useParams();
+  const [messages, setMessages] = useState([]);
+  const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [otherUser, setOtherUser] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [donation, setDonation] = useState(null);
+  const messagesEndRef = useRef(null);
+  const socketRef = useRef(null);
+  const messageIds = useRef(new Set()); // Track already rendered message IDs
 
   useEffect(() => {
-    if (!chatId) return;
+    initializeChat();
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, []);
 
-    setLoading(true);
-
-    // Subscribe to messages
-    const unsubscribe = chatService.subscribeToMessages(
-      chatId,
-      (updatedMessages) => {
-        setMessages(updatedMessages);
-        setLoading(false);
-        scrollToBottom();
-      },
-    );
-
-    // Mark as read
-    chatService.markAsRead(chatId, currentUserId);
-
-    return () => unsubscribe();
-  }, [chatId, currentUserId]);
-
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
-  };
-
-  const handleSendMessage = async (text) => {
+  const initializeChat = async () => {
     try {
-      await chatService.sendMessage(chatId, currentUserId, text);
+      const token = await auth.currentUser?.getIdToken();
+      const firebaseUid = auth.currentUser?.uid;
+
+      // Get current user info
+      const userResponse = await api.get('/users/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setCurrentUserId(userResponse.data.data.id);
+
+      // Get donation details
+      const donationResponse = await api.get(`/donations/${donationId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setDonation(donationResponse.data.data);
+
+      // Get other user info
+      const otherUserResponse = await api.get(`/users/${receiverId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setOtherUser(otherUserResponse.data.data);
+
+      // Fetch existing messages, add their IDs to the set
+      const messagesResponse = await api.get(`/chat/${donationId}/${receiverId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      const msgs = messagesResponse.data.data || [];
+      msgs.forEach(m => messageIds.current.add(m.id));
+      setMessages(msgs);
+
+      // Initialize socket with forced websocket transport
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+      socketRef.current = io(socketUrl, {
+        transports: ['websocket'],
+        query: { firebaseUid, donationId, receiverId }
+      });
+
+      socketRef.current.emit('join_chat', { donationId, receiverId });
+
+      // Listen for new messages and add only if not duplicate
+      socketRef.current.on('receive_message', (message) => {
+        if (!messageIds.current.has(message.id)) {
+          messageIds.current.add(message.id);
+          setMessages(prevMessages => [...prevMessages, message]);
+          scrollToBottom();
+        }
+      });
+
+      setLoading(false);
     } catch (error) {
-      console.error("Error sending message:", error);
-      alert("Failed to send message. Please try again.");
+      console.error('Error initializing chat:', error);
+      setLoading(false);
     }
   };
 
-  const getOtherUserName = () => {
-    if (!chatDetails) return "Chat";
-    const otherUserId = chatDetails.participants.find(
-      (id) => id !== currentUserId,
-    );
-    return chatDetails.participantDetails[otherUserId]?.name || "User";
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return;
+
+    try {
+      const token = await auth.currentUser?.getIdToken();
+
+      const messageData = {
+        donationId: parseInt(donationId),
+        receiverId: parseInt(receiverId),
+        message: newMessage,
+        firebaseUid: auth.currentUser?.uid
+      };
+
+      const response = await api.post('/chat/send', messageData, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (response.data.success && socketRef.current) {
+        socketRef.current.emit('send_message', {
+          ...response.data.data,
+          donationId,
+          receiverId
+        });
+        setNewMessage('');
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Failed to send message');
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
   };
 
   if (loading) {
     return (
       <div style={styles.loadingContainer}>
         <div style={styles.spinner}></div>
+        <p>Loading chat...</p>
       </div>
     );
   }
@@ -68,137 +143,286 @@ const ChatWindow = ({ chatId, chatDetails }) => {
     <div style={styles.container}>
       {/* Header */}
       <div style={styles.header}>
-        <button onClick={() => navigate(-1)} style={styles.backButton}>
-          <svg viewBox="0 0 24 24" fill="currentColor" style={styles.backIcon}>
-            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
-          </svg>
+        <button style={styles.backBtn} onClick={() => navigate(-1)}>
+          ← Back
         </button>
         <div style={styles.headerInfo}>
-          <h2 style={styles.headerTitle}>{getOtherUserName()}</h2>
-          <p style={styles.headerSubtitle}>{chatDetails?.donationTitle}</p>
+          <div style={styles.avatar}>
+            {otherUser?.name?.substring(0, 2).toUpperCase()}
+          </div>
+          <div style={styles.headerText}>
+            <div style={styles.headerName}>{otherUser?.name}</div>
+            <div style={styles.headerSubtext}>
+              {donation?.foodName} • {donation?.foodType === 'veg' ? '🥗 Veg' : '🍗 Non-Veg'}
+            </div>
+          </div>
         </div>
+        <button style={styles.closeBtn} onClick={() => navigate('/requests')}>
+          ✕
+        </button>
       </div>
 
       {/* Messages */}
       <div style={styles.messagesContainer}>
         {messages.length === 0 ? (
-          <div style={styles.emptyState}>
+          <div style={styles.emptyChat}>
+            <div style={styles.emptyIcon}>💬</div>
             <p style={styles.emptyText}>No messages yet</p>
             <p style={styles.emptySubtext}>Start the conversation!</p>
           </div>
         ) : (
-          messages.map((message) => (
-            <MessageBubble
-              key={message.id}
-              message={message}
-              isOwnMessage={message.senderId === currentUserId}
-            />
-          ))
+          messages.map((msg, index) => {
+            const isCurrentUser = msg.senderId === currentUserId;
+            return (
+              <div
+                key={msg.id || index}
+                style={{
+                  ...styles.messageRow,
+                  justifyContent: isCurrentUser ? 'flex-end' : 'flex-start'
+                }}
+              >
+                {!isCurrentUser && (
+                  <div style={styles.messageAvatar}>
+                    {otherUser?.name?.substring(0, 1).toUpperCase()}
+                  </div>
+                )}
+                <div
+                  style={{
+                    ...styles.messageBubble,
+                    ...(isCurrentUser ? styles.messageBubbleOwn : styles.messageBubbleOther)
+                  }}
+                >
+                  <div style={styles.messageText}>{msg.message}</div>
+                  <div style={styles.messageTime}>
+                    {new Date(msg.createdAt).toLocaleTimeString([], {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </div>
+                </div>
+                {isCurrentUser && (
+                  <div style={{ ...styles.messageAvatar, background: COLORS.primary }}>
+                    You
+                  </div>
+                )}
+              </div>
+            );
+          })
         )}
         <div ref={messagesEndRef} />
       </div>
 
       {/* Input */}
-      <ChatInput onSendMessage={handleSendMessage} />
+      <div style={styles.inputContainer}>
+        <textarea
+          style={styles.input}
+          placeholder="Type your message..."
+          value={newMessage}
+          onChange={(e) => setNewMessage(e.target.value)}
+          onKeyPress={handleKeyPress}
+          rows={1}
+        />
+        <button
+          style={{
+            ...styles.sendBtn,
+            opacity: newMessage.trim() ? 1 : 0.5
+          }}
+          onClick={handleSendMessage}
+          disabled={!newMessage.trim()}
+        >
+          Send →
+        </button>
+      </div>
     </div>
   );
 };
 
 const styles = {
   container: {
-    display: "flex",
-    flexDirection: "column",
-    height: "100vh",
-    backgroundColor: "#FFFFFF",
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    background: '#F9F9F9',
   },
   loadingContainer: {
-    display: "flex",
-    justifyContent: "center",
-    alignItems: "center",
-    height: "100vh",
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
   },
   spinner: {
-    width: "40px",
-    height: "40px",
-    border: "4px solid #F3F4F6",
-    borderTop: "4px solid #C1693C",
-    borderRadius: "50%",
-    animation: "spin 1s linear infinite",
+    width: '40px',
+    height: '40px',
+    border: '4px solid #f3f3f3',
+    borderTop: `4px solid ${COLORS.primary}`,
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    marginBottom: '16px',
   },
   header: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    padding: "12px 16px",
-    backgroundColor: "#FFFFFF",
-    borderBottom: "1px solid #F3F4F6",
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '16px',
+    background: 'white',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
   },
-  backButton: {
-    width: "36px",
-    height: "36px",
-    borderRadius: "50%",
-    backgroundColor: "transparent",
-    border: "none",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-  },
-  backIcon: {
-    width: "24px",
-    height: "24px",
-    color: "#111827",
+  backBtn: {
+    padding: '8px 16px',
+    background: 'transparent',
+    border: 'none',
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    color: COLORS.primary,
+    cursor: 'pointer',
   },
   headerInfo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    flex: 1,
+    marginLeft: '12px',
+  },
+  avatar: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '20px',
+    background: COLORS.primary,
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: FONT_SIZES.sm,
+    fontWeight: 'bold',
+  },
+  headerText: {
     flex: 1,
   },
-  headerTitle: {
-    margin: 0,
-    fontSize: "16px",
-    fontWeight: "600",
-    color: "#111827",
+  headerName: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    color: COLORS.text,
   },
-  headerSubtitle: {
-    margin: "2px 0 0 0",
-    fontSize: "12px",
-    color: "#6B7280",
+  headerSubtext: {
+    fontSize: FONT_SIZES.xs,
+    color: COLORS.textLight,
+  },
+  closeBtn: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '16px',
+    background: '#F3F4F6',
+    border: 'none',
+    fontSize: '18px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   messagesContainer: {
     flex: 1,
-    overflowY: "auto",
-    padding: "16px 0 80px 0", // Extra padding for input
+    overflowY: 'auto',
+    padding: '20px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
   },
-  emptyState: {
-    textAlign: "center",
-    padding: "60px 20px",
+  emptyChat: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyIcon: {
+    fontSize: '64px',
+    marginBottom: '16px',
   },
   emptyText: {
-    fontSize: "16px",
-    fontWeight: "600",
-    color: "#111827",
-    marginBottom: "4px",
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: '4px',
   },
   emptySubtext: {
-    fontSize: "14px",
-    color: "#6B7280",
+    fontSize: FONT_SIZES.sm,
+    color: COLORS.textLight,
+  },
+  messageRow: {
+    display: 'flex',
+    alignItems: 'flex-end',
+    gap: '8px',
+    marginBottom: '4px',
+  },
+  messageAvatar: {
+    width: '32px',
+    height: '32px',
+    borderRadius: '16px',
+    background: '#E5E7EB',
+    color: COLORS.text,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: FONT_SIZES.xs,
+    fontWeight: 'bold',
+    flexShrink: 0,
+  },
+  messageBubble: {
+    maxWidth: '70%',
+    padding: '12px 16px',
+    borderRadius: '16px',
+    wordWrap: 'break-word',
+  },
+  messageBubbleOwn: {
+    background: COLORS.primary,
+    color: 'white',
+    borderBottomRightRadius: '4px',
+  },
+  messageBubbleOther: {
+    background: 'white',
+    color: COLORS.text,
+    borderBottomLeftRadius: '4px',
+    boxShadow: '0 1px 2px rgba(0,0,0,0.1)',
+  },
+  messageText: {
+    fontSize: FONT_SIZES.sm,
+    lineHeight: '1.5',
+    marginBottom: '4px',
+  },
+  messageTime: {
+    fontSize: FONT_SIZES.xs,
+    opacity: 0.7,
+  },
+  inputContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '16px',
+    background: 'white',
+    boxShadow: '0 -2px 8px rgba(0,0,0,0.08)',
+  },
+  input: {
+    flex: 1,
+    padding: '12px 16px',
+    fontSize: FONT_SIZES.sm,
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: '24px',
+    resize: 'none',
+    fontFamily: 'inherit',
+    outline: 'none',
+    maxHeight: '100px',
+  },
+  sendBtn: {
+    padding: '12px 24px',
+    background: COLORS.primary,
+    color: 'white',
+    border: 'none',
+    borderRadius: '24px',
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '600',
+    cursor: 'pointer',
   },
 };
-
-// Add keyframe animation for spinner
-if (typeof document !== "undefined") {
-  const styleSheet = document.styleSheets[0];
-  const keyframes = `
-  @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
-  `;
-
-  try {
-    styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
-  } catch (e) {
-    // Ignore
-  }
-}
 
 export default ChatWindow;

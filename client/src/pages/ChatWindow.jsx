@@ -16,6 +16,7 @@ const ChatWindow = () => {
   const [donation, setDonation] = useState(null);
   const messagesEndRef = useRef(null);
   const socketRef = useRef(null);
+  const messageIds = useRef(new Set()); // Track already rendered message IDs
 
   useEffect(() => {
     initializeChat();
@@ -49,25 +50,34 @@ const ChatWindow = () => {
       });
       setOtherUser(otherUserResponse.data.data);
 
-      // Fetch existing messages
+      // Fetch existing messages, add their IDs to the set
       const messagesResponse = await api.get(`/chat/${donationId}/${receiverId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      setMessages(messagesResponse.data.data || []);
 
-      // Initialize Socket.IO
-      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
+      const msgs = messagesResponse.data.data || [];
+      msgs.forEach(m => messageIds.current.add(m.id));
+      setMessages(msgs);
+
+      // Initialize socket with forced websocket transport
+      const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://127.0.0.1:5000';
+
       socketRef.current = io(socketUrl, {
-        transports: ['websocket'], // force WebSocket, avoid polling fallback issues
+        transports: ['websocket'],
         query: { firebaseUid, donationId, receiverId }
       });
 
       socketRef.current.emit('join_chat', { donationId, receiverId });
 
-      socketRef.current.on('receive_message', (message) => {
-        setMessages((prevMessages) => [...prevMessages, message]);
-        scrollToBottom();
-      });
+socketRef.current.off('receive_message');
+socketRef.current.on('receive_message', message => {
+  if (!messageIds.current.has(message.id)) {
+    messageIds.current.add(message.id);
+    setMessages(prev => [...prev, message]);
+    scrollToBottom();
+  }
+});
+
 
       setLoading(false);
     } catch (error) {
