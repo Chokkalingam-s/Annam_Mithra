@@ -10,7 +10,17 @@ const Requests = () => {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('received'); // 'received' or 'sent'
+  const [activeTab, setActiveTab] = useState('received');
+  
+  // ✅ NEW: Modal states
+  const [showAcceptModal, setShowAcceptModal] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [showEditForm, setShowEditForm] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    foodName: '',
+    quantity: '',
+    description: ''
+  });
 
   useEffect(() => {
     fetchRequests();
@@ -21,10 +31,9 @@ const Requests = () => {
       setLoading(true);
       const token = await auth.currentUser?.getIdToken();
       
-      // Fetch requests based on active tab
       const endpoint = activeTab === 'received' 
-        ? '/donations/interests/received'  // Requests I received as donor
-        : '/donations/interests/sent';     // Requests I sent as receiver
+        ? '/donations/interests/received'
+        : '/donations/interests/sent';
 
       const response = await api.get(endpoint, {
         headers: { Authorization: `Bearer ${token}` }
@@ -40,18 +49,60 @@ const Requests = () => {
     }
   };
 
-  const handleAccept = async (interestId, donationId) => {
+  // ✅ NEW: Open modal when accept is clicked
+  const handleAcceptClick = (request) => {
+    setSelectedRequest(request);
+    setEditFormData({
+      foodName: request.donation?.foodName || '',
+      quantity: request.donation?.quantity || '',
+      description: request.donation?.description || ''
+    });
+    setShowAcceptModal(true);
+  };
+
+  // ✅ NEW: Handle keep listing (with or without edit)
+  const handleKeepListing = async (shouldEdit) => {
+    if (shouldEdit) {
+      setShowEditForm(true);
+    } else {
+      await finalizeAccept('keep', null);
+    }
+  };
+
+  // ✅ NEW: Handle remove listing (mark as completed)
+  const handleRemoveListing = async () => {
+    await finalizeAccept('remove', null);
+  };
+
+  // ✅ NEW: Handle edit form submission
+  const handleEditSubmit = async () => {
+    await finalizeAccept('keep', editFormData);
+  };
+
+  // ✅ NEW: Finalize the accept action
+  const finalizeAccept = async (action, updatedData) => {
     try {
       const token = await auth.currentUser?.getIdToken();
       const response = await api.post(
         '/donations/interests/accept',
-        { interestId, donationId },
+        { 
+          interestId: selectedRequest.id,
+          donationId: selectedRequest.donationId,
+          action: action, // 'keep' or 'remove'
+          updatedData: updatedData // null or edited data
+        },
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
       if (response.data.success) {
-        alert('Request accepted!');
-        fetchRequests(); // Refresh list
+        alert(action === 'remove' 
+          ? 'Request accepted! Listing removed from map.' 
+          : 'Request accepted! Listing still visible on map.'
+        );
+        setShowAcceptModal(false);
+        setShowEditForm(false);
+        setSelectedRequest(null);
+        fetchRequests();
       }
     } catch (error) {
       console.error('Error accepting request:', error);
@@ -70,7 +121,7 @@ const Requests = () => {
 
       if (response.data.success) {
         alert('Request declined');
-        fetchRequests(); // Refresh list
+        fetchRequests();
       }
     } catch (error) {
       console.error('Error declining request:', error);
@@ -133,7 +184,6 @@ const Requests = () => {
           ) : (
             requests.map((request) => (
               <div key={request.id} style={styles.requestCard}>
-                {/* Food Info */}
                 <div style={styles.cardHeader}>
                   <div style={styles.foodInfo}>
                     <h3 style={styles.foodName}>
@@ -155,7 +205,6 @@ const Requests = () => {
                   </span>
                 </div>
 
-                {/* Receiver/Donor Info */}
                 <div style={styles.userInfo}>
                   <div style={styles.avatar}>
                     {activeTab === 'received'
@@ -178,14 +227,12 @@ const Requests = () => {
                   </div>
                 </div>
 
-                {/* Message */}
                 {request.message && (
                   <div style={styles.message}>
                     <strong>Message:</strong> {request.message}
                   </div>
                 )}
 
-                {/* Actions */}
                 {activeTab === 'received' && request.status === 'pending' && (
                   <div style={styles.actions}>
                     <button
@@ -202,7 +249,7 @@ const Requests = () => {
                     </button>
                     <button
                       style={styles.btnAccept}
-                      onClick={() => handleAccept(request.id, request.donationId)}
+                      onClick={() => handleAcceptClick(request)} // ✅ Changed
                     >
                       Accept
                     </button>
@@ -219,6 +266,108 @@ const Requests = () => {
           )}
         </div>
       </div>
+
+      {/* ✅ NEW: Accept Modal */}
+      {showAcceptModal && selectedRequest && (
+        <div style={styles.modalOverlay} onClick={() => setShowAcceptModal(false)}>
+          <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h2 style={styles.modalTitle}>Accept Request</h2>
+              <button style={styles.closeBtn} onClick={() => setShowAcceptModal(false)}>✕</button>
+            </div>
+
+            {!showEditForm ? (
+              <>
+                <div style={styles.modalContent}>
+                  <p style={styles.modalText}>
+                    You're accepting the request for <strong>{selectedRequest.donation?.foodName}</strong>
+                  </p>
+                  <p style={styles.modalQuestion}>
+                    What would you like to do with your listing?
+                  </p>
+                </div>
+
+                <div style={styles.modalActions}>
+                  <button
+                    style={styles.modalBtn}
+                    onClick={() => handleRemoveListing()}
+                  >
+                    🗑️ Remove from Map
+                    <span style={styles.modalBtnSub}>Mark as completed</span>
+                  </button>
+                  
+                  <button
+                    style={styles.modalBtn}
+                    onClick={() => handleKeepListing(false)}
+                  >
+                    ✅ Keep on Map
+                    <span style={styles.modalBtnSub}>As is (no changes)</span>
+                  </button>
+                  
+                  <button
+                    style={styles.modalBtnPrimary}
+                    onClick={() => handleKeepListing(true)}
+                  >
+                    ✏️ Keep & Edit
+                    <span style={styles.modalBtnSub}>Update quantity/details</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={styles.modalContent}>
+                  <p style={styles.modalText}>Edit your donation details:</p>
+                  
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Food Name</label>
+                    <input
+                      style={styles.input}
+                      value={editFormData.foodName}
+                      onChange={(e) => setEditFormData({ ...editFormData, foodName: e.target.value })}
+                    />
+                  </div>
+
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Quantity (servings)</label>
+                    <input
+                      type="number"
+                      style={styles.input}
+                      value={editFormData.quantity}
+                      onChange={(e) => setEditFormData({ ...editFormData, quantity: e.target.value })}
+                    />
+                  </div>
+
+                  <div style={styles.formGroup}>
+                    <label style={styles.label}>Description</label>
+                    <textarea
+                      style={styles.textarea}
+                      value={editFormData.description}
+                      onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                      rows={3}
+                    />
+                  </div>
+                </div>
+
+                <div style={styles.modalActionsRow}>
+                  <button
+                    style={styles.btnSecondary}
+                    onClick={() => setShowEditForm(false)}
+                  >
+                    Back
+                  </button>
+                  <button
+                    style={styles.btnPrimary}
+                    onClick={handleEditSubmit}
+                  >
+                    Save & Accept
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       <BottomNav />
     </>
   );
@@ -423,6 +572,157 @@ const styles = {
     fontSize: FONT_SIZES.sm,
     color: COLORS.textLight,
     marginTop: '8px',
+  },
+  // ✅ NEW: Modal styles
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1000,
+    padding: '20px',
+  },
+  modal: {
+    background: 'white',
+    borderRadius: '16px',
+    maxWidth: '500px',
+    width: '100%',
+    maxHeight: '90vh',
+    overflow: 'auto',
+  },
+  modalHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '20px',
+    borderBottom: `1px solid ${COLORS.border}`,
+  },
+  modalTitle: {
+    fontSize: FONT_SIZES.lg,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  closeBtn: {
+    background: 'none',
+    border: 'none',
+    fontSize: '24px',
+    cursor: 'pointer',
+    color: COLORS.textLight,
+  },
+  modalContent: {
+    padding: '20px',
+  },
+  modalText: {
+    fontSize: FONT_SIZES.md,
+    color: COLORS.text,
+    marginBottom: '8px',
+  },
+  modalQuestion: {
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginTop: '16px',
+    marginBottom: '16px',
+  },
+  modalActions: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px',
+    padding: '0 20px 20px',
+  },
+  modalBtn: {
+    padding: '16px',
+    background: 'white',
+    border: `2px solid ${COLORS.border}`,
+    borderRadius: '12px',
+    cursor: 'pointer',
+    textAlign: 'left',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    color: COLORS.text,
+    transition: 'all 0.2s',
+  },
+  modalBtnPrimary: {
+    padding: '16px',
+    background: COLORS.primary,
+    color: 'white',
+    border: 'none',
+    borderRadius: '12px',
+    cursor: 'pointer',
+    textAlign: 'left',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px',
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+  },
+  modalBtnSub: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: 'normal',
+    opacity: 0.7,
+  },
+  modalActionsRow: {
+    display: 'flex',
+    gap: '12px',
+    padding: '0 20px 20px',
+  },
+  btnSecondary: {
+    flex: 1,
+    padding: '12px',
+    background: 'white',
+    color: COLORS.text,
+    border: `2px solid ${COLORS.border}`,
+    borderRadius: '8px',
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  btnPrimary: {
+    flex: 1,
+    padding: '12px',
+    background: COLORS.primary,
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: FONT_SIZES.md,
+    fontWeight: '600',
+    cursor: 'pointer',
+  },
+  formGroup: {
+    marginBottom: '16px',
+  },
+  label: {
+    display: 'block',
+    fontSize: FONT_SIZES.sm,
+    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: '8px',
+  },
+  input: {
+    width: '100%',
+    padding: '12px',
+    fontSize: FONT_SIZES.sm,
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: '8px',
+    outline: 'none',
+  },
+  textarea: {
+    width: '100%',
+    padding: '12px',
+    fontSize: FONT_SIZES.sm,
+    border: `1px solid ${COLORS.border}`,
+    borderRadius: '8px',
+    resize: 'vertical',
+    fontFamily: 'inherit',
+    outline: 'none',
   },
 };
 

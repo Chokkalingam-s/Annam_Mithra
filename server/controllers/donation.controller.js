@@ -342,10 +342,12 @@ exports.getSentInterests = async (req, res) => {
 };
 
 // Accept interest
+// Accept interest with action
 exports.acceptInterest = async (req, res) => {
   try {
-    const { interestId, donationId } = req.body;
+    const { interestId, donationId, action, updatedData } = req.body;
 
+    // Update interest status
     const interest = await db.Interest.findByPk(interestId);
     if (!interest) {
       return res.status(404).json({
@@ -357,10 +359,32 @@ exports.acceptInterest = async (req, res) => {
     interest.status = 'accepted';
     await interest.save();
 
+    // Handle donation based on action
+    const donation = await Donation.findByPk(donationId);
+    if (!donation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Donation not found'
+      });
+    }
+
+    if (action === 'remove') {
+      // Mark donation as completed
+      donation.status = 'completed';
+      await donation.save();
+    } else if (action === 'keep' && updatedData) {
+      // Update donation with new data
+      donation.foodName = updatedData.foodName || donation.foodName;
+      donation.quantity = updatedData.quantity || donation.quantity;
+      donation.description = updatedData.description || donation.description;
+      await donation.save();
+    }
+    // If action === 'keep' and no updatedData, keep as is (no changes)
+
     res.status(200).json({
       success: true,
       message: 'Interest accepted',
-      data: interest
+      data: { interest, donation }
     });
 
   } catch (error) {
@@ -372,6 +396,7 @@ exports.acceptInterest = async (req, res) => {
     });
   }
 };
+
 
 // Decline interest
 exports.declineInterest = async (req, res) => {
