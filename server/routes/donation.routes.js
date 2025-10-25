@@ -15,4 +15,7 @@ router.get('/', donationController.getDonations);
 // Create interest
 router.post('/interest', donationController.createInterest);
 
+//app.use("/api/tags", require("./routes/tag.routes"));
+
+
 module.exports = router;

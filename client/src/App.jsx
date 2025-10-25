@@ -9,6 +9,8 @@ import {
 import { auth } from "./config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import api from "./services/api";
+import TagMe from "./pages/TagMe";
+import CreateTag from "./pages/CreateTag";
 
 // Import pages
 import Splash from "./pages/Splash";
@@ -18,6 +20,7 @@ import ProfileSetup from "./pages/ProfileSetup";
 import ReceiverHome from "./pages/ReceiverHome";
 import DonateForm from "./pages/DonateForm";
 import Profile from "./pages/Profile";
+
 
 // Import notification components
 import NotificationSetup from "./components/NotificationSetup";
@@ -56,7 +59,7 @@ function App() {
               JSON.stringify({
                 ...response.data.data,
                 profileCompleted: true,
-              }),
+              })
             );
             setProfileCompleted(true);
           } else {
@@ -115,7 +118,6 @@ function App() {
           path="/signup"
           element={!user ? <Signup /> : <Navigate to="/home" />}
         />
-
         <Route
           path="/profile-setup"
           element={
@@ -128,7 +130,6 @@ function App() {
             )
           }
         />
-
         <Route
           path="/home"
           element={
@@ -141,7 +142,6 @@ function App() {
             )
           }
         />
-
         <Route
           path="/donate"
           element={
@@ -154,7 +154,6 @@ function App() {
             )
           }
         />
-
         <Route
           path="/find-food"
           element={
@@ -167,7 +166,6 @@ function App() {
             )
           }
         />
-
         <Route
           path="/profile"
           element={
@@ -180,7 +178,6 @@ function App() {
             )
           }
         />
-
         <Route
           path="/"
           element={
@@ -193,6 +190,8 @@ function App() {
             )
           }
         />
+        <Route path="/tag-me" element={<TagMe />} />
+        <Route path="/tag-me/create" element={<CreateTag />} />
       </Routes>
     </Router>
   );

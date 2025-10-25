@@ -1,8 +1,19 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
+
 
 const ExploreCard = ({ icon, label, bgColor }) => {
+  const navigate = useNavigate();
+
+  const handleClick = () => {
+    if (label === 'Tag me') {
+      navigate('/tag-me');
+    }
+    // Add other navigation handlers here
+  };
+
   return (
-    <div style={{ ...styles.exploreCard, backgroundColor: bgColor }}>
+    <div style={{ ...styles.exploreCard, backgroundColor: bgColor }} onClick={handleClick}>
       <div style={styles.exploreIcon}>{icon}</div>
       <div style={styles.exploreLabel}>{label}</div>
     </div>
