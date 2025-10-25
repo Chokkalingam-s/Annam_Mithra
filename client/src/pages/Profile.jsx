@@ -5,6 +5,8 @@ import api from '../services/api';
 import Button from '../components/Button';
 import Input from '../components/Input';
 import { COLORS, SPACING, FONT_SIZES } from '../config/theme';
+import Header from "../components/receiver/Header";
+import BottomNav from "../components/receiver/BottomNav";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -125,12 +127,7 @@ const Profile = () => {
   return (
     <div className="page" style={styles.container}>
       {/* Header */}
-      <div style={styles.header}>
-        <button style={styles.backBtn} onClick={() => navigate('/home')}>
-          ← Back
-        </button>
-        <h1 style={styles.title}>My Profile</h1>
-      </div>
+      <Header  />
 
       {/* Content */}
       <div style={styles.content}>
@@ -330,19 +327,21 @@ const Profile = () => {
           )}
         </div>
       </div>
-    </div>
+     <BottomNav />
+     </div>
   );
 };
 
 const styles = {
   container: {
     minHeight: '100vh',
+    paddingBottom: '80px',
     background: '#F9F9F9',
   },
   header: {
-    background: COLORS.primary || '#7C9D3D',
-    color: 'white',
-    padding: '20px',
+    color: COLORS.accent,
+    padding: '7px',
+    textAlign: 'center',
   },
   backBtn: {
     background: 'transparent',
