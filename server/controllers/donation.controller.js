@@ -404,3 +404,104 @@ exports.declineInterest = async (req, res) => {
     });
   }
 };
+
+// Get user's own donations
+exports.getMyDonations = async (req, res) => {
+  try {
+    const firebaseUid = req.query.firebaseUid || req.body.firebaseUid;
+    
+    console.log('🔍 Looking for donations by firebaseUid:', firebaseUid);
+    
+    const user = await User.findOne({ where: { firebaseUid } });
+    
+    if (!user) {
+      console.log('❌ User not found with firebaseUid:', firebaseUid);
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    console.log('✅ Found user:', user.id, user.name);
+
+    const donations = await Donation.findAll({
+      where: { 
+        donorId: user.id
+      },
+      order: [['createdAt', 'DESC']]
+    });
+
+    console.log('📦 Found donations:', donations.length);
+
+    res.status(200).json({
+      success: true,
+      data: donations
+    });
+
+  } catch (error) {
+    console.error('❌ Error fetching user donations:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching donations',
+      error: error.message
+    });
+  }
+};
+
+// Update donation quantity
+exports.updateQuantity = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { quantity, firebaseUid } = req.body;
+
+    console.log('📝 Updating donation:', id, 'New quantity:', quantity);
+
+    const user = await User.findOne({ where: { firebaseUid } });
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const donation = await Donation.findByPk(id);
+    
+    if (!donation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Donation not found'
+      });
+    }
+
+    // Check if user is the donor
+    if (donation.donorId !== user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only edit your own donations'
+      });
+    }
+
+    // Update quantity
+    await donation.update({
+      quantity: parseInt(quantity),
+      remainingQuantity: parseInt(quantity)
+    });
+
+    console.log('✅ Quantity updated successfully');
+
+    res.status(200).json({
+      success: true,
+      message: 'Quantity updated successfully',
+      data: donation
+    });
+
+  } catch (error) {
+    console.error('❌ Error updating quantity:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating quantity',
+      error: error.message
+    });
+  }
+};

@@ -18,4 +18,21 @@ router.get('/interests/sent', verifyToken, donationController.getSentInterests);
 router.post('/interests/accept', verifyToken, donationController.acceptInterest);
 router.post('/interests/decline', verifyToken, donationController.declineInterest);
 
+
+
+// Get user's own donations - MUST BE BEFORE GET /
+router.get('/my-donations', donationController.getMyDonations);
+
+// Create donation with image upload
+router.post('/', upload.single('foodImage'), donationController.createDonation);
+
+// Get all donations
+router.get('/', donationController.getDonations);
+
+// Update donation quantity
+router.patch('/:id/quantity', donationController.updateQuantity);
+
+// Create interest
+router.post('/interest', donationController.createInterest);
+
 module.exports = router;
