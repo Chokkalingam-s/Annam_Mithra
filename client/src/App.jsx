@@ -26,6 +26,7 @@ import NotificationSetup from "./components/NotificationSetup";
 
 import "./App.css";
 import Welcome from "./pages/Welcome";
+import FindFoodNearby from "./pages/FindFoodNearby";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -146,6 +147,19 @@ function App() {
           element={
             user && profileCompleted ? (
               <DonateForm />
+            ) : user && !profileCompleted ? (
+              <Navigate to="/profile-setup" />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
+
+        <Route
+          path="/find-food"
+          element={
+            user && profileCompleted ? (
+              <FindFoodNearby />
             ) : user && !profileCompleted ? (
               <Navigate to="/profile-setup" />
             ) : (

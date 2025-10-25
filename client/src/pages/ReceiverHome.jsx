@@ -130,7 +130,7 @@ const ReceiverHome = () => {
           <div style={styles.actionArrow}>→</div>
         </div>
 
-        <div style={styles.actionCard}>
+        <div style={styles.actionCard} onClick={() => navigate("/find-food")}>
           <div style={styles.actionIcon}>🗺️</div>
           <div style={styles.actionContent}>
             <h3 style={styles.actionTitle}>Find Food Nearby</h3>
