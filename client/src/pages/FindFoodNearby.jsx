@@ -16,6 +16,9 @@ const FindFoodNearby = () => {
   const [requestMessage, setRequestMessage] = useState('');
   const [searchAddress, setSearchAddress] = useState('');
   const [tempLocation, setTempLocation] = useState(null);
+  const [isMapLoaded, setIsMapLoaded] = useState(false); // NEW STATE
+  const [isUpdatingAddress, setIsUpdatingAddress] = useState(false); // NEW STATE
+
 
   useEffect(() => {
     getCurrentLocation();
@@ -51,21 +54,28 @@ const FindFoodNearby = () => {
     }
   };
 
-  const reverseGeocode = async (lat, lng) => {
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
-      );
-      const data = await response.json();
-      if (data.results[0]) {
-        setCurrentAddress(data.results[0].formatted_address);
-      }
-    } catch (error) {
-      console.error('Error reverse geocoding:', error);
-    } finally {
-      setLoading(false);
+  const reverseGeocode = async (lat, lng, skipLoadingUpdate = false) => {
+  try {
+    if (!skipLoadingUpdate) {
+      setIsUpdatingAddress(true);
     }
-  };
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
+    );
+    const data = await response.json();
+    if (data.results[0]) {
+      setCurrentAddress(data.results[0].formatted_address);
+    }
+  } catch (error) {
+    console.error('Error reverse geocoding:', error);
+  } finally {
+    if (!skipLoadingUpdate) {
+      setIsUpdatingAddress(false);
+    }
+    setLoading(false);
+  }
+};
+
 
   const fetchNearbyDonations = async () => {
     try {
@@ -88,24 +98,29 @@ const FindFoodNearby = () => {
   };
 
   const searchLocation = async () => {
-    if (!searchAddress.trim()) return;
+  if (!searchAddress.trim()) return;
 
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchAddress)}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
-      );
-      const data = await response.json();
-      if (data.results[0]) {
-        const location = data.results[0].geometry.location;
-        setTempLocation({ lat: location.lat, lng: location.lng });
-        if (map) {
-          map.panTo(location);
-        }
+  setIsUpdatingAddress(true); // ADD THIS
+  try {
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchAddress)}&key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY}`
+    );
+    const data = await response.json();
+    if (data.results[0]) {
+      const location = data.results[0].geometry.location;
+      const newLocation = { lat: location.lat, lng: location.lng };
+      setTempLocation(newLocation);
+      if (map) {
+        map.panTo(location);
       }
-    } catch (error) {
-      console.error('Error searching location:', error);
     }
-  };
+  } catch (error) {
+    console.error('Error searching location:', error);
+  } finally {
+    setIsUpdatingAddress(false); // ADD THIS
+  }
+};
+
 
   const handleMapClick = useCallback((e) => {
     setTempLocation({
@@ -114,13 +129,16 @@ const FindFoodNearby = () => {
     });
   }, []);
 
-  const updateLocation = () => {
-    if (tempLocation) {
-      setUserLocation(tempLocation);
-      reverseGeocode(tempLocation.lat, tempLocation.lng);
-      setShowLocationModal(false);
-    }
-  };
+  const updateLocation = async () => {
+  if (tempLocation) {
+    setIsUpdatingAddress(true);
+    setUserLocation(tempLocation);
+    await reverseGeocode(tempLocation.lat, tempLocation.lng);
+    setIsUpdatingAddress(false);
+    setShowLocationModal(false);
+  }
+};
+
 
   const handleMarkerClick = (donation) => {
     setSelectedDonation(donation);
@@ -196,8 +214,11 @@ const FindFoodNearby = () => {
       </div>
     );
   }
-
   return (
+  <LoadScript 
+    googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}
+    onLoad={() => setIsMapLoaded(true)}
+  >
     <div style={styles.container}>
       {/* Header with Location */}
       <div style={styles.header}>
@@ -205,7 +226,9 @@ const FindFoodNearby = () => {
           <div style={styles.locationIcon}>📍</div>
           <div style={styles.locationText}>
             <div style={styles.locationTitle}>Current Location</div>
-            <div style={styles.locationAddress}>{currentAddress}</div>
+            <div style={styles.locationAddress}>
+              {isUpdatingAddress ? 'Updating address...' : currentAddress}
+            </div>
           </div>
         </div>
         <button 
@@ -217,8 +240,13 @@ const FindFoodNearby = () => {
       </div>
 
       {/* Map with Donation Pins */}
-      <div style={styles.mapContainer}>
-        <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+      {loading || !isMapLoaded ? (
+        <div style={styles.loadingContainer}>
+          <div style={styles.spinner}></div>
+          <p>Loading map...</p>
+        </div>
+      ) : (
+        <div style={styles.mapContainer}>
           <GoogleMap
             mapContainerStyle={mapContainerStyle}
             center={userLocation}
@@ -246,13 +274,13 @@ const FindFoodNearby = () => {
               />
             ))}
           </GoogleMap>
-        </LoadScript>
 
-        {/* Donation Count Badge */}
-        <div style={styles.donationBadge}>
-          🍽️ {donations.length} donations nearby
+          {/* Donation Count Badge */}
+          <div style={styles.donationBadge}>
+            🍽️ {donations.length} donations nearby
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Location Change Modal */}
       {showLocationModal && (
@@ -283,7 +311,11 @@ const FindFoodNearby = () => {
             </div>
 
             <div style={{ marginTop: '16px', padding: '0 20px' }}>
-              <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+              {isUpdatingAddress ? (
+                <div style={{ height: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <div style={styles.spinner}></div>
+                </div>
+              ) : (
                 <GoogleMap
                   mapContainerStyle={{ width: '100%', height: '300px', borderRadius: '8px' }}
                   center={tempLocation || userLocation}
@@ -301,7 +333,7 @@ const FindFoodNearby = () => {
                     />
                   )}
                 </GoogleMap>
-              </LoadScript>
+              )}
             </div>
 
             <div style={styles.modalActions}>
@@ -312,17 +344,18 @@ const FindFoodNearby = () => {
                 Cancel
               </button>
               <button 
-                style={styles.btnPrimary}
+                style={{...styles.btnPrimary, opacity: isUpdatingAddress ? 0.6 : 1}}
                 onClick={updateLocation}
+                disabled={isUpdatingAddress}
               >
-                Update Location
+                {isUpdatingAddress ? 'Updating...' : 'Update Location'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Food Detail Modal */}
+      {/* Food Detail Modal - KEEP AS IS */}
       {showDetailModal && selectedDonation && (
         <div style={styles.modalOverlay} onClick={() => setShowDetailModal(false)}>
           <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
@@ -399,7 +432,9 @@ const FindFoodNearby = () => {
         </div>
       )}
     </div>
-  );
+  </LoadScript>
+);
+
 };
 
 // Keep all the styles exactly the same...
