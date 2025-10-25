@@ -11,6 +11,7 @@ import Signup from './pages/Signup';
 import ProfileSetup from './pages/ProfileSetup';
 import ReceiverHome from './pages/ReceiverHome';
 import DonateForm from './pages/DonateForm';
+import Profile from './pages/Profile';
 
 import './App.css';
 
@@ -120,7 +121,10 @@ function App() {
           path="/donate" 
           element={user && profileCompleted ? <DonateForm /> : <Navigate to={user ? "/profile-setup" : "/"} />} 
         />
-
+        <Route 
+            path="/profile" 
+            element={user && profileCompleted ? <Profile /> : <Navigate to={user ? "/profile-setup" : "/"} />} 
+        />
         {/* Catch all - redirect based on auth state */}
         <Route 
           path="*" 
