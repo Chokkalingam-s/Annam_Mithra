@@ -2,12 +2,17 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ProfileDropdown from "../common/ProfileDropdown";
 import logo from "../../assets/logo.png";
+import useTranslate from "../../hooks/useTranslate"; // ✅ import translation hook
 
 const Header = () => {
   const navigate = useNavigate();
   const profile = JSON.parse(localStorage.getItem("userProfile") || "{}");
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
+
+  // ✅ Example: translate static UI text
+  const title = useTranslate("Annam Mithra");
+  const locationPlaceholder = useTranslate("Set your location");
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -40,14 +45,14 @@ const Header = () => {
       <div style={styles.locationContainer} onClick={() => navigate("/")}>
         {/* Logo */}
         <div style={styles.logoContainer}>
-          <img src={logo} style={styles.logo}/>
+          <img src={logo} style={styles.logo} />
         </div>
 
         {/* Location */}
         <div style={styles.locationText}>
-          <div style={styles.locationTitle}>Annam Mithra</div>
+          <div style={styles.locationTitle}>{title}</div>
           <div style={styles.locationSubtitle}>
-            {profile.address || "Set your location"}
+            {profile.address || locationPlaceholder}
           </div>
         </div>
       </div>
@@ -85,7 +90,6 @@ const styles = {
     gap: "8px",
     flex: 1,
   },
-
   logo: {
     width: "50px",
     height: "50px",
@@ -103,10 +107,6 @@ const styles = {
     fontSize: "12px",
     color: "rgba(253, 253, 253, 0.87)",
     marginTop: "1px",
-  },
-  chevronIcon: {
-    width: "20px",
-    height: "20px",
   },
   topRightIcons: {
     display: "flex",

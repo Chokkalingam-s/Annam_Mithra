@@ -48,32 +48,6 @@ const BottomNav = () => {
           active={currentPage === "home"}
         />
 
-        {/* 2. Messages Tab - Second position */}
-        <TabButton
-          icon={
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
-            </svg>
-          }
-          label="Messages"
-          page="messages"
-          navigatePath="/messages"
-          active={currentPage === "messages"}
-        />
-
-        {/* 3. Receive Tab - Third position */}
-        <TabButton
-          icon={
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.9 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z" />
-            </svg>
-          }
-          label="Receive"
-          page="receive"
-          navigatePath="/find-food"
-          active={currentPage === "receive"}
-        />
-
         {/* 4. Donate Tab - Fourth position */}
         <TabButton
           icon={
@@ -86,6 +60,23 @@ const BottomNav = () => {
           navigatePath="/donate"
           active={currentPage === "donate"}
         />
+
+        {/* 3. Receive Tab - Third position */}
+        <TabButton
+          icon={
+<svg viewBox="0 0 24 24" fill="currentColor">
+  <path d="M8 3c.55 0 1 .45 1 1v7c0 1.66-1.34 3-3 3H5v7c0 .55-.45 1-1 1s-1-.45-1-1V4c0-.55.45-1 1-1s1 .45 1 1v7h1c.55 0 1-.45 1-1V4c0-.55.45-1 1-1zm13 8c0-1.66-1.34-3-3-3V4c0-.55.45-1 1-1s1 .45 1 1v4h1V4c0-.55.45-1 1-1s1 .45 1 1v7h-1zm-8-6c4.97 0 9 4.03 9 9s-4.03 9-9 9-9-4.03-9-9 4.03-9 9-9zm0 2c-3.86 0-7 3.14-7 7 0 3.86 3.14 7 7 7s7-3.14 7-7c0-3.86-3.14-7-7-7z"/>
+</svg>
+
+ 
+          }
+          label="Receive"
+          page="receive"
+          navigatePath="/find-food"
+          active={currentPage === "receive"}
+        />
+
+
       </div>
 
       {/* Add animation CSS */}

@@ -250,7 +250,12 @@ const Requests = () => {
                     >
                       💬 Chat
                     </button>
-                    {/* Add your accept button here if needed */}
+                     <button
+                      style={styles.btnAccept}
+                      onClick={() => handleAcceptClick(request)} // ✅ Changed
+                    >
+                      Accept
+                    </button>
                   </div>
                 )}
 
