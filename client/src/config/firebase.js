@@ -1,7 +1,9 @@
 // client/src/config/firebase.js
+
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getMessaging } from "firebase/messaging";
+import { getFirestore } from "firebase/firestore";
 
 // Your Firebase configuration
 const firebaseConfig = {
@@ -20,7 +22,8 @@ const app = initializeApp(firebaseConfig);
 // Initialize Firebase services
 const auth = getAuth(app);
 const messaging = getMessaging(app);
+const db = getFirestore(app);
 
 // Export everything
-export { app, auth, messaging };
+export { app, auth, messaging, db };
 export default app;

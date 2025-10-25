@@ -20,6 +20,8 @@ import ProfileSetup from "./pages/ProfileSetup";
 import ReceiverHome from "./pages/ReceiverHome";
 import DonateForm from "./pages/DonateForm";
 import Profile from "./pages/Profile";
+import ChatListPage from "./pages/ChatListPage";
+import ChatWindowPage from "./pages/ChatWindowPage";
 
 
 // Import notification components
@@ -190,6 +192,7 @@ function App() {
             )
           }
         />
+        
         <Route path="/tag-me" element={<TagMe />} />
         <Route path="/tag-me/create" element={<CreateTag />} />
       </Routes>
