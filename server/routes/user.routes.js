@@ -10,4 +10,7 @@ router.post('/profile', userController.createOrUpdateProfile);
 router.get('/profile', verifyToken, userController.getProfile);
 router.put('/profile', verifyToken, userController.updateProfile);
 
+//app.use("/api/tags", require("./routes/tag.routes"));
+
+
 module.exports = router;

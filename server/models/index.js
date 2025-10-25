@@ -42,3 +42,27 @@ db.User.hasMany(db.Badge, { foreignKey: 'userId' });
 db.Badge.belongsTo(db.User, { foreignKey: 'userId' });
 
 module.exports = db;
+
+db.Tag = require("./tag.model.js")(sequelize, Sequelize);
+db.TagVerification = require("./tagVerification.model.js")(sequelize, Sequelize);
+
+// Relationships
+db.Tag.belongsTo(db.User, {
+  foreignKey: 'userId',
+  as: 'creator'
+});
+
+db.TagVerification.belongsTo(db.User, {
+  foreignKey: 'userId',
+  as: 'verifier'
+});
+
+db.TagVerification.belongsTo(db.Tag, {
+  foreignKey: 'tagId',
+  as: 'tag'
+});
+
+db.Tag.hasMany(db.TagVerification, {
+  foreignKey: 'tagId',
+  as: 'verifications'
+});

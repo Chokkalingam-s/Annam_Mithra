@@ -9,6 +9,8 @@ import {
 import { auth } from "./config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import api from "./services/api";
+import TagMe from "./pages/TagMe";
+import CreateTag from "./pages/CreateTag";
 
 // Import pages
 import Splash from "./pages/Splash";
@@ -20,6 +22,7 @@ import DonateForm from "./pages/DonateForm";
 import Profile from "./pages/Profile";
 import ChatListPage from "./pages/ChatListPage";
 import ChatWindowPage from "./pages/ChatWindowPage";
+
 
 // Import notification components
 import NotificationSetup from "./components/NotificationSetup";
@@ -58,7 +61,7 @@ function App() {
               JSON.stringify({
                 ...response.data.data,
                 profileCompleted: true,
-              }),
+              })
             );
             setProfileCompleted(true);
           } else {
@@ -117,7 +120,6 @@ function App() {
           path="/signup"
           element={!user ? <Signup /> : <Navigate to="/home" />}
         />
-
         <Route
           path="/profile-setup"
           element={
@@ -130,7 +132,6 @@ function App() {
             )
           }
         />
-
         <Route
           path="/home"
           element={
@@ -143,7 +144,6 @@ function App() {
             )
           }
         />
-
         <Route
           path="/donate"
           element={
@@ -156,7 +156,6 @@ function App() {
             )
           }
         />
-
         <Route
           path="/find-food"
           element={
@@ -169,7 +168,6 @@ function App() {
             )
           }
         />
-
         <Route
           path="/profile"
           element={
@@ -182,7 +180,6 @@ function App() {
             )
           }
         />
-
         <Route
           path="/"
           element={
@@ -195,46 +192,9 @@ function App() {
             )
           }
         />
-
-        {/* Chat routes */}
-        <Route
-          path="/messages"
-          element={
-            user && profileCompleted ? (
-              <ChatListPage />
-            ) : user ? (
-              <Navigate to="/profile-setup" replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-        <Route
-          path="/chat/:chatId"
-          element={
-            user && profileCompleted ? (
-              <ChatWindowPage />
-            ) : user ? (
-              <Navigate to="/profile-setup" replace />
-            ) : (
-              <Navigate to="/login" replace />
-            )
-          }
-        />
-
-        {/* Catch all - redirect to home or welcome */}
-        <Route
-          path="*"
-          element={
-            user && profileCompleted ? (
-              <Navigate to="/receiver-home" replace />
-            ) : user ? (
-              <Navigate to="/profile-setup" replace />
-            ) : (
-              <Navigate to="/" replace />
-            )
-          }
-        />
+        
+        <Route path="/tag-me" element={<TagMe />} />
+        <Route path="/tag-me/create" element={<CreateTag />} />
       </Routes>
     </Router>
   );
