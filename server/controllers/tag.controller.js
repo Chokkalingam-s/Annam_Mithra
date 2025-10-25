@@ -6,9 +6,11 @@ const TagVerification = db.TagVerification;
 // Create a new tag
 exports.createTag = async (req, res) => {
   try {
-    const { latitude, longitude, address, description, estimatedPeople, tagType } = req.body;
-    const firebaseUid = req.user ? req.user.uid : req.body.firebaseUid;
+    const { latitude, longitude, address, description, estimatedPeople, tagType, firebaseUid } = req.body;
 
+    console.log('📝 Creating tag with data:', req.body);
+
+    // Find user
     const user = await User.findOne({ where: { firebaseUid } });
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
@@ -30,6 +32,8 @@ exports.createTag = async (req, res) => {
       verificationCount: 0
     });
 
+    console.log('✅ Tag created successfully:', tag.id);
+
     res.status(201).json({
       success: true,
       message: 'Tag created successfully',
@@ -37,7 +41,7 @@ exports.createTag = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error creating tag:', error);
+    console.error('❌ Error creating tag:', error);
     res.status(500).json({
       success: false,
       message: 'Error creating tag',
@@ -105,51 +109,10 @@ exports.getTags = async (req, res) => {
   }
 };
 
-// Get single tag by ID
-exports.getTagById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const tag = await Tag.findByPk(id, {
-      include: [{
-        model: User,
-        as: 'creator',
-        attributes: ['id', 'name', 'phone']
-      }, {
-        model: TagVerification,
-        as: 'verifications',
-        include: [{
-          model: User,
-          as: 'verifier',
-          attributes: ['id', 'name']
-        }]
-      }]
-    });
-
-    if (!tag) {
-      return res.status(404).json({ success: false, message: 'Tag not found' });
-    }
-
-    res.status(200).json({
-      success: true,
-      data: tag
-    });
-
-  } catch (error) {
-    console.error('Error fetching tag:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching tag',
-      error: error.message
-    });
-  }
-};
-
 // Verify a tag
 exports.verifyTag = async (req, res) => {
   try {
-    const { tagId, verified, comment } = req.body;
-    const firebaseUid = req.user ? req.user.uid : req.body.firebaseUid;
+    const { tagId, verified, comment, firebaseUid } = req.body;
 
     const user = await User.findOne({ where: { firebaseUid } });
     if (!user) {
@@ -185,7 +148,7 @@ exports.verifyTag = async (req, res) => {
     const newCount = tag.verificationCount + 1;
     await tag.update({
       verificationCount: newCount,
-      status: newCount >= 3 ? 'verified' : tag.status // Auto-verify after 3 confirmations
+      status: newCount >= 3 ? 'verified' : tag.status
     });
 
     res.status(200).json({
@@ -203,46 +166,9 @@ exports.verifyTag = async (req, res) => {
   }
 };
 
-// Delete tag (only creator can delete)
-exports.deleteTag = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const firebaseUid = req.user ? req.user.uid : req.body.firebaseUid;
-
-    const user = await User.findOne({ where: { firebaseUid } });
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
-    }
-
-    const tag = await Tag.findByPk(id);
-    if (!tag) {
-      return res.status(404).json({ success: false, message: 'Tag not found' });
-    }
-
-    if (tag.userId !== user.id) {
-      return res.status(403).json({ success: false, message: 'Unauthorized' });
-    }
-
-    await tag.update({ status: 'inactive' });
-
-    res.status(200).json({
-      success: true,
-      message: 'Tag deleted successfully'
-    });
-
-  } catch (error) {
-    console.error('Error deleting tag:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting tag',
-      error: error.message
-    });
-  }
-};
-
 // Helper function
 function calculateDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371; // Earth's radius in km
+  const R = 6371;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
   

@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import React, { useState, useEffect, useCallback } from 'react';
+import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../config/firebase';
 import api from '../services/api';
@@ -15,7 +15,13 @@ const CreateTag = () => {
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  useState(() => {
+  // Use the faster useJsApiLoader hook
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+  });
+
+  // Fixed: useEffect instead of useState
+  useEffect(() => {
     getCurrentLocation();
   }, []);
 
@@ -136,6 +142,15 @@ const CreateTag = () => {
     borderRadius: '12px'
   };
 
+  if (!isLoaded || !location) {
+    return (
+      <div style={styles.loadingContainer}>
+        <div style={styles.spinner}></div>
+        <p>Loading map...</p>
+      </div>
+    );
+  }
+
   return (
     <div style={styles.container}>
       {/* Header */}
@@ -165,29 +180,25 @@ const CreateTag = () => {
 
         {/* Map */}
         <div style={styles.mapSection}>
-          {location && (
-            <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-              <GoogleMap
-                mapContainerStyle={mapContainerStyle}
-                center={location}
-                zoom={15}
-                onClick={handleMapClick}
-              >
-                <Marker
-                  position={location}
-                  draggable={true}
-                  onDragEnd={(e) => {
-                    const newLoc = {
-                      lat: e.latLng.lat(),
-                      lng: e.latLng.lng()
-                    };
-                    setLocation(newLoc);
-                    reverseGeocode(newLoc.lat, newLoc.lng);
-                  }}
-                />
-              </GoogleMap>
-            </LoadScript>
-          )}
+          <GoogleMap
+            mapContainerStyle={mapContainerStyle}
+            center={location}
+            zoom={15}
+            onClick={handleMapClick}
+          >
+            <Marker
+              position={location}
+              draggable={true}
+              onDragEnd={(e) => {
+                const newLoc = {
+                  lat: e.latLng.lat(),
+                  lng: e.latLng.lng()
+                };
+                setLocation(newLoc);
+                reverseGeocode(newLoc.lat, newLoc.lng);
+              }}
+            />
+          </GoogleMap>
         </div>
 
         {/* Address */}
@@ -274,6 +285,22 @@ const styles = {
     minHeight: '100vh',
     background: '#F9F9F9',
     paddingBottom: '20px',
+  },
+  loadingContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
+  },
+  spinner: {
+    width: '40px',
+    height: '40px',
+    border: '4px solid #f3f3f3',
+    borderTop: '4px solid #fc8019',
+    borderRadius: '50%',
+    animation: 'spin 1s linear infinite',
+    marginBottom: '16px',
   },
   header: {
     display: 'flex',
@@ -398,5 +425,15 @@ const styles = {
     marginTop: '8px',
   },
 };
+
+// Add spinner animation
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(styleSheet);
 
 export default CreateTag;
