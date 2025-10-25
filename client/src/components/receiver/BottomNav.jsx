@@ -1,133 +1,174 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
-const BottomNav = ({ currentPage = "home" }) => {
+const BottomNav = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const TabButton = ({ icon, label, active, onClick, badge }) => (
+  // Auto-detect current page from the URL path
+  const getCurrentPage = () => {
+    const path = location.pathname;
+    if (path === "/home" || path === "/") return "home";
+    if (path === "/messages") return "messages";
+    if (path === "/find-food") return "receive";
+    if (path === "/donate") return "donate";
+    return "home";
+  };
+
+  const currentPage = getCurrentPage();
+
+  const TabButton = ({ icon, label, page, navigatePath, active }) => (
     <div
-      style={{ ...styles.tabButton, ...(active && styles.tabButtonActive) }}
-      onClick={onClick}
+      style={{
+        ...styles.tabButton,
+        ...(active && styles.tabButtonActive),
+      }}
+      onClick={() => navigate(navigatePath)}
     >
-      <div style={{ position: "relative" }}>
-        <div style={{ ...styles.tabIcon, ...(active && styles.tabIconActive) }}>
-          {icon}
-        </div>
-        {badge > 0 && (
-          <span style={styles.badge}>{badge > 9 ? "9+" : badge}</span>
-        )}
+      <div style={{ ...styles.tabIcon, ...(active && styles.tabIconActive) }}>
+        {icon}
       </div>
-      <div style={{ ...styles.tabLabel, ...(active && styles.tabLabelActive) }}>
-        {label}
-      </div>
+      {active && <span style={styles.tabLabel}>{label}</span>}
     </div>
   );
 
   return (
-    <div style={styles.bottomBar}>
-      <TabButton
-        icon={
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
-          </svg>
-        }
-        label="Home"
-        active={currentPage === "home"}
-        onClick={() => navigate("/home")}
-      />
+    <div style={styles.bottomNavContainer}>
+      <div style={styles.bottomBar}>
+        {/* 1. Home Tab - First position */}
+        <TabButton
+          icon={
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
+            </svg>
+          }
+          label="Home"
+          page="home"
+          navigatePath="/home"
+          active={currentPage === "home"}
+        />
 
-      <TabButton
-        icon={
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
-          </svg>
-        }
-        label="Messages"
-        active={currentPage === "messages"}
-        onClick={() => navigate("/messages")}
-      />
+        {/* 2. Messages Tab - Second position */}
+        <TabButton
+          icon={
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 2H4c-1.1 0-1.99.9-1.99 2L2 22l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z" />
+            </svg>
+          }
+          label="Messages"
+          page="messages"
+          navigatePath="/messages"
+          active={currentPage === "messages"}
+        />
 
-      <TabButton
-        icon={
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.9 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z" />
-          </svg>
-        }
-        label="Receive"
-        active={currentPage === "receive"}
-        onClick={() => navigate("/find-food")}
-      />
+        {/* 3. Receive Tab - Third position */}
+        <TabButton
+          icon={
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 3H4v10c0 2.21 1.79 4 4 4h6c2.21 0 4-1.79 4-4v-3h2c1.11 0 2-.9 2-2V5c0-1.11-.89-2-2-2zm0 5h-2V5h2v3zM4 19h16v2H4z" />
+            </svg>
+          }
+          label="Receive"
+          page="receive"
+          navigatePath="/find-food"
+          active={currentPage === "receive"}
+        />
 
-      <TabButton
-        icon={
-          <svg viewBox="0 0 24 24" fill="currentColor">
-            <path d="M11 9h2V6h3V4h-3V1h-2v3H8v2h3v3zm-4 9c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zm10 0c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2zm-9.83-3.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.86-7.01L19.42 4h-.01l-1.1 2-2.76 5H8.53l-.13-.27L6.16 6l-.95-2-.94-2H1v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.13 0-.25-.11-.25-.25z" />
-          </svg>
+        {/* 4. Donate Tab - Fourth position */}
+        <TabButton
+          icon={
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 6h-2.18c.11-.31.18-.65.18-1 0-1.66-1.34-3-3-3-1.05 0-1.96.54-2.5 1.35l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2 7.34 2 6 3.34 6 5c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 11 8.76l1-1.36 1 1.36L15.38 12 17 10.83 14.92 8H20v6z" />
+            </svg>
+          }
+          label="Donate"
+          page="donate"
+          navigatePath="/donate"
+          active={currentPage === "donate"}
+        />
+      </div>
+
+      {/* Add animation CSS */}
+      <style>{`
+        @keyframes fadeInLabel {
+          0% {
+            opacity: 0;
+            transform: translateX(-10px);
+          }
+          100% {
+            opacity: 1;
+            transform: translateX(0);
+          }
         }
-        label="Donate"
-        active={currentPage === "donate"}
-        onClick={() => navigate("/donate")}
-      />
+      `}</style>
     </div>
   );
 };
 
 const styles = {
-  bottomBar: {
+  bottomNavContainer: {
     position: "fixed",
-    bottom: "0",
-    left: "0",
-    right: "0",
-    backgroundColor: "#FFFFFF",
-    borderTop: "1px solid #F3F4F6",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: "0 16px 20px",
+    zIndex: 1000,
+    pointerEvents: "none",
+  },
+  bottomBar: {
+    position: "relative",
+    background: "rgba(255, 255, 255, 0.95)",
+    backdropFilter: "blur(20px) saturate(180%)",
+    WebkitBackdropFilter: "blur(20px) saturate(180%)",
+    borderRadius: "28px",
+    padding: "8px",
+    boxShadow:
+      "0 8px 32px rgba(0, 0, 0, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)",
     display: "flex",
     justifyContent: "space-around",
     alignItems: "center",
-    padding: "8px 0 12px",
-    boxShadow: "0 -2px 10px rgba(0,0,0,0.05)",
-    zIndex: 100,
+    maxWidth: "420px",
+    margin: "0 auto",
+    border: "1px solid rgba(255, 255, 255, 0.6)",
+    pointerEvents: "auto",
+    gap: "4px",
   },
   tabButton: {
     display: "flex",
-    flexDirection: "column",
     alignItems: "center",
-    gap: "4px",
+    justifyContent: "center",
+    gap: "8px",
+    padding: "12px",
     cursor: "pointer",
-    flex: 1,
-    padding: "4px",
+    borderRadius: "20px",
+    transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+    backgroundColor: "transparent",
+    minWidth: "48px",
   },
-  tabButtonActive: {},
+  tabButtonActive: {
+    backgroundColor: "#C1693C",
+    paddingLeft: "16px",
+    paddingRight: "16px",
+    boxShadow: "0 4px 12px rgba(193, 105, 60, 0.3)",
+  },
   tabIcon: {
     width: "24px",
     height: "24px",
     color: "#9CA3AF",
-  },
-  tabIconActive: {
-    color: "#C1693C",
-  },
-  tabLabel: {
-    fontSize: "11px",
-    fontWeight: "600",
-    color: "#9CA3AF",
-  },
-  tabLabelActive: {
-    color: "#C1693C",
-  },
-  badge: {
-    position: "absolute",
-    top: "-4px",
-    right: "-4px",
-    minWidth: "16px",
-    height: "16px",
-    backgroundColor: "#FF6B6B",
-    color: "#FFFFFF",
-    borderRadius: "8px",
-    fontSize: "10px",
-    fontWeight: "600",
+    transition: "all 0.3s ease",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "0 4px",
+  },
+  tabIconActive: {
+    color: "#FFFFFF",
+  },
+  tabLabel: {
+    fontSize: "14px",
+    fontWeight: "600",
+    color: "#FFFFFF",
+    whiteSpace: "nowrap",
+    animation: "fadeInLabel 0.3s ease",
   },
 };
 
