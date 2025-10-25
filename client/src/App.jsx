@@ -6,11 +6,13 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { LoadScript } from "@react-google-maps/api"; // ✅ Add this import
 import { auth } from "./config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import api from "./services/api";
 import TagMe from "./pages/TagMe";
 import CreateTag from "./pages/CreateTag";
+import Requests from './pages/Requests';
 
 // Import pages
 import Splash from "./pages/Splash";
@@ -103,80 +105,81 @@ function App() {
   }
 
   return (
-    <Router>
-      <NotificationSetup />
+ <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+      <Router>
+        <NotificationSetup />
 
-      <Routes>
-        <Route path="/welcome" element={<Welcome />} />
-        <Route
-          path="/login"
-          element={!user ? <Login /> : <Navigate to="/home" />}
-        />
-        <Route
-          path="/signup"
-          element={!user ? <Signup /> : <Navigate to="/home" />}
-        />
-        <Route
-          path="/profile-setup"
-          element={
-            user && !profileCompleted ? (
-              <ProfileSetup />
-            ) : user && profileCompleted ? (
-              <Navigate to="/home" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route
-          path="/home"
-          element={
-            user && profileCompleted ? (
-              <ReceiverHome />
-            ) : user && !profileCompleted ? (
-              <Navigate to="/profile-setup" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route
-          path="/donate"
-          element={
-            user && profileCompleted ? (
-              <DonateForm />
-            ) : user && !profileCompleted ? (
-              <Navigate to="/profile-setup" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route
-          path="/find-food"
-          element={
-            user && profileCompleted ? (
-              <FindFoodNearby />
-            ) : user && !profileCompleted ? (
-              <Navigate to="/profile-setup" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            user && profileCompleted ? (
-              <Profile />
-            ) : user && !profileCompleted ? (
-              <Navigate to="/profile-setup" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        
+        <Routes>
+          <Route path="/welcome" element={<Welcome />} />
+          <Route
+            path="/login"
+            element={!user ? <Login /> : <Navigate to="/home" />}
+          />
+          <Route
+            path="/signup"
+            element={!user ? <Signup /> : <Navigate to="/home" />}
+          />
+          <Route
+            path="/profile-setup"
+            element={
+              user && !profileCompleted ? (
+                <ProfileSetup />
+              ) : user && profileCompleted ? (
+                <Navigate to="/home" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/home"
+            element={
+              user && profileCompleted ? (
+                <ReceiverHome />
+              ) : user && !profileCompleted ? (
+                <Navigate to="/profile-setup" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/donate"
+            element={
+              user && profileCompleted ? (
+                <DonateForm />
+              ) : user && !profileCompleted ? (
+                <Navigate to="/profile-setup" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/find-food"
+            element={
+              user && profileCompleted ? (
+                <FindFoodNearby />
+              ) : user && !profileCompleted ? (
+                <Navigate to="/profile-setup" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              user && profileCompleted ? (
+                <Profile />
+              ) : user && !profileCompleted ? (
+                <Navigate to="/profile-setup" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+
         {/* ✅ Add Badges Route */}
         <Route
           path="/badges"
@@ -193,6 +196,19 @@ function App() {
         
         <Route path="/tag-me" element={<TagMe />} />
         <Route path="/tag-me/create" element={<CreateTag />} />
+
+                  <Route
+  path="/requests"
+  element={
+    user && profileCompleted ? (
+      <Requests />
+    ) : user && !profileCompleted ? (
+      <Navigate to="/profile-setup" />
+    ) : (
+      <Navigate to="/login" />
+    )
+  }
+/>
         
         <Route
           path="/"
@@ -206,9 +222,12 @@ function App() {
             )
           }
         />
-      </Routes>
-    </Router>
+
+        </Routes>
+      </Router>
+    </LoadScript>
   );
 }
 
 export default App;
+
