@@ -8,6 +8,7 @@ exports.createDonation = async (req, res) => {
     const { 
       foodItems, 
       foodType, 
+      targetReceiverType,
       latitude, 
       longitude, 
       address,
@@ -49,7 +50,7 @@ exports.createDonation = async (req, res) => {
         longitude: parseFloat(longitude),
         address: address,
         phone: phone,
-        targetReceiverType: 'both',
+        targetReceiverType: targetReceiverType || 'both',
         status: 'active',
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
       });

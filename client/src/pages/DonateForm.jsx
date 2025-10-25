@@ -9,6 +9,7 @@ const DonateForm = () => {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(1);
   const [foodType, setFoodType] = useState('');
+  const [targetReceiverType, setTargetReceiverType] = useState('both'); // New field
   const [foodItems, setFoodItems] = useState([{ dishName: '', quantity: '' }]);
   const [foodImage, setFoodImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -44,7 +45,6 @@ const DonateForm = () => {
         },
         (error) => {
           console.error('Error getting location:', error);
-          // Default to a location if geolocation fails
           setLocationData(prev => ({
             ...prev,
             latitude: 17.385044,
@@ -143,6 +143,7 @@ const DonateForm = () => {
 
   const isStep1Valid = () => {
     return foodType !== '' && 
+           targetReceiverType !== '' &&
            foodItems.every(item => item.dishName.trim() && item.quantity.trim());
   };
 
@@ -165,10 +166,10 @@ const DonateForm = () => {
     try {
       setLoading(true);
 
-      // Create FormData for file upload
       const formData = new FormData();
       formData.append('foodItems', JSON.stringify(foodItems));
       formData.append('foodType', foodType);
+      formData.append('targetReceiverType', targetReceiverType); // Add this
       formData.append('latitude', locationData.latitude);
       formData.append('longitude', locationData.longitude);
       formData.append('address', locationData.address);
@@ -179,7 +180,6 @@ const DonateForm = () => {
         formData.append('foodImage', foodImage);
       }
 
-      // Get Firebase token
       const token = await auth.currentUser.getIdToken();
 
       const response = await api.post('/donations', formData, {
@@ -225,6 +225,13 @@ const DonateForm = () => {
     lng: locationData.longitude || 78.486671
   };
 
+  // Donate To options
+  const donateToOptions = [
+    { id: 'individual', label: 'Individual', icon: '👤', desc: 'Donate to individuals in need' },
+    { id: 'ngo', label: 'Organizations', icon: '🏢', desc: 'NGOs, Charities, Ashrams, etc.' },
+    { id: 'both', label: 'Anyone', icon: '🤝', desc: 'Open to all' },
+  ];
+
   return (
     <div className="page" style={styles.container}>
       <div style={styles.header}>
@@ -268,6 +275,31 @@ const DonateForm = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Donate To - NEW FIELD */}
+{/* Donate To - UPDATED FOR HORIZONTAL */}
+<div style={styles.formGroup}>
+  <label style={styles.formLabel}>Donate To</label>
+  <div style={styles.donateToContainerHorizontal}>
+    {donateToOptions.map(option => (
+      <div
+        key={option.id}
+        style={{
+          ...styles.donateToCardHorizontal,
+          ...(targetReceiverType === option.id && styles.donateToCardSelected)
+        }}
+        onClick={() => setTargetReceiverType(option.id)}
+      >
+        <div style={styles.donateToIconSmall}>{option.icon}</div>
+        <div style={styles.donateToLabelSmall}>{option.label}</div>
+        {targetReceiverType === option.id && (
+          <div style={styles.checkmarkSmall}>✓</div>
+        )}
+      </div>
+    ))}
+  </div>
+</div>
+
 
               {/* Food Image Upload */}
               <div style={styles.formGroup}>
@@ -473,6 +505,14 @@ const DonateForm = () => {
                     </span>
                   </div>
                   <div style={styles.summaryItem}>
+                    <span style={styles.summaryLabel}>Donate To:</span>
+                    <span style={styles.summaryValue}>
+                      {targetReceiverType === 'individual' && '👤 Individual'}
+                      {targetReceiverType === 'ngo' && '🏢 Organizations'}
+                      {targetReceiverType === 'both' && '🤝 Anyone'}
+                    </span>
+                  </div>
+                  <div style={styles.summaryItem}>
                     <span style={styles.summaryLabel}>Items:</span>
                     <span style={styles.summaryValue}>{foodItems.length} dish(es)</span>
                   </div>
@@ -586,6 +626,51 @@ const styles = {
     fontSize: FONT_SIZES.sm,
     fontWeight: '600',
     color: COLORS.text,
+  },
+   // NEW: Horizontal layout for "Donate To"
+  donateToContainerHorizontal: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, 1fr)',
+    gap: '12px',
+  },
+  donateToCardHorizontal: {
+    background: 'white',
+    border: `2px solid ${COLORS.border}`,
+    borderRadius: '12px',
+    padding: '16px 12px',
+    cursor: 'pointer',
+    transition: 'all 0.3s ease',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+    minHeight: '100px',
+  },
+  donateToIconSmall: {
+    fontSize: '32px',
+    marginBottom: '8px',
+  },
+  donateToLabelSmall: {
+    fontSize: FONT_SIZES.xs,
+    fontWeight: '600',
+    color: COLORS.text,
+    textAlign: 'center',
+  },
+  checkmarkSmall: {
+    position: 'absolute',
+    top: '8px',
+    right: '8px',
+    width: '20px',
+    height: '20px',
+    borderRadius: '10px',
+    background: COLORS.primary,
+    color: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '12px',
+    fontWeight: 'bold',
   },
   imageUploadContainer: {
     width: '100%',
