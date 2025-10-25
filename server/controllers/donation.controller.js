@@ -1,6 +1,7 @@
 const db = require("../models");
 const Donation = db.Donation;
 const User = db.User;
+const admin = require('../config/firebase.config');
 
 // Create donation
 exports.createDonation = async (req, res) => {
@@ -58,7 +59,41 @@ exports.createDonation = async (req, res) => {
       donations.push(donation);
     }
 
-    res.status(201).json({
+    // Fetch users with valid FCM tokens except donor
+    const users = await User.findAll({
+      where: {
+        fcmToken: { [db.Sequelize.Op.ne]: null }
+      },
+      attributes: ['fcmToken']
+    });
+
+    // Extract tokens
+    const tokens = users.map(u => u.fcmToken);
+
+    if (tokens.length === 0) {
+      console.log('No users with FCM tokens found');
+    } else {
+      const notifications = tokens.map(token => ({
+        token,
+        notification: {
+          title: 'New Food Donation Available',
+          body: `New donation(s): ${items.map(i => i.dishName).join(', ')} available near you!`
+        }
+      }));
+
+      // Send notifications sequentially or in batches
+      for (const message of notifications) {
+        try {
+          await admin.messaging().send(message);
+          console.log(`Notification sent to token: ${message.token}`);
+        } catch (err) {
+          console.error(`Notification failed for token ${message.token}:`, err);
+        }
+      }
+    }
+
+    // Send response once after notifications sent
+    return res.status(201).json({
       success: true,
       message: 'Donation created successfully',
       data: donations
@@ -66,11 +101,13 @@ exports.createDonation = async (req, res) => {
 
   } catch (error) {
     console.error('Error creating donation:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error creating donation',
-      error: error.message
-    });
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: 'Error creating donation',
+        error: error.message
+      });
+    }
   }
 };
 
