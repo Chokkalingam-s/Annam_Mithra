@@ -24,6 +24,7 @@ import TestNotificationButton from "./components/TestNotificationButton";
 
 import "./App.css";
 import Welcome from "./pages/Welcome";
+import FindFoodNearby from "./pages/FindFoodNearby";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -194,6 +195,10 @@ function App() {
               <Navigate to={user ? "/profile-setup" : "/"} />
             )
           }
+        />
+        <Route 
+          path="/find-food" 
+          element={user && profileCompleted ? <FindFoodNearby /> : <Navigate to={user ? "/profile-setup" : "/"} />} 
         />
 
         {/* Catch all - redirect based on auth state */}

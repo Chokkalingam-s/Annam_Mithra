@@ -158,7 +158,7 @@ const ReceiverHome = () => {
                   icon="🗺️"
                   title="Find Food Nearby"
                   description="Discover available food in your area"
-                  onClick={() => {}}
+                  onClick={() => navigate('/find-food')}
                   color="#3B82F6"
                 />
 
