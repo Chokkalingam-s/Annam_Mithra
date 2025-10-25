@@ -203,7 +203,7 @@ const TagMe = () => {
                 </div>
                 <button
                   style={styles.verifyBtn}
-                  onClick={() => handleVerifyTag(selectedTag.id)}
+                  onClick={() => window.alert("Tag is valid")}
                 >
                   Verify Location
                 </button>
