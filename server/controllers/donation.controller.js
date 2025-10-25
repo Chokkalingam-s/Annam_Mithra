@@ -242,9 +242,11 @@ exports.createInterest = async (req, res) => {
 };
 
 // Get interests received (for donors)
+// Get interests received (for donors)
 exports.getReceivedInterests = async (req, res) => {
   try {
-    const firebaseUid = req.user ? req.user.uid : req.body.firebaseUid;
+    const firebaseUid = req.user.uid; // ✅ Now this will work because of middleware
+
     const user = await User.findOne({ where: { firebaseUid } });
 
     if (!user) {
@@ -299,7 +301,8 @@ exports.getReceivedInterests = async (req, res) => {
 // Get interests sent (for receivers)
 exports.getSentInterests = async (req, res) => {
   try {
-    const firebaseUid = req.user ? req.user.uid : req.body.firebaseUid;
+    const firebaseUid = req.user.uid; // ✅ Now this will work
+
     const user = await User.findOne({ where: { firebaseUid } });
 
     if (!user) {
