@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import ProfileDropdown from "../common/ProfileDropdown";
+import logo from "../../assets/logo.png";
 
 const Header = () => {
   const navigate = useNavigate();
@@ -36,12 +37,10 @@ const Header = () => {
 
   return (
     <div style={styles.topBar}>
-      <div style={styles.locationContainer}>
+      <div style={styles.locationContainer} onClick={() => navigate("/")}>
         {/* Logo */}
         <div style={styles.logoContainer}>
-          <svg style={styles.logo} viewBox="0 0 24 24" fill="white">
-            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
-          </svg>
+          <img src={logo} style={styles.logo}/>
         </div>
 
         {/* Location */}
@@ -89,18 +88,10 @@ const styles = {
     gap: "8px",
     flex: 1,
   },
-  logoContainer: {
-    width: "32px",
-    height: "32px",
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: "8px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+
   logo: {
-    width: "22px",
-    height: "22px",
+    width: "50px",
+    height: "50px",
   },
   locationText: {
     flex: 1,

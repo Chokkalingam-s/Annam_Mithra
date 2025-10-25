@@ -4,6 +4,8 @@ import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
 import { auth } from '../config/firebase';
 import api from '../services/api';
 import { COLORS, FONT_SIZES } from '../config/theme';
+import Header from "../components/receiver/Header";
+import BottomNav from "../components/receiver/BottomNav";
 
 const DonateForm = () => {
   const navigate = useNavigate();
@@ -233,11 +235,10 @@ const DonateForm = () => {
   ];
 
   return (
+    
     <div className="page" style={styles.container}>
+      <Header  />
       <div style={styles.header}>
-        <button style={styles.backBtn} onClick={handleBack}>
-          ← Back
-        </button>
         <h1 style={styles.title}>Donate Food</h1>
       </div>
 
@@ -539,34 +540,29 @@ const DonateForm = () => {
           </div>
         )}
       </div>
-    </div>
+    
+     <BottomNav />
+     </div>
   );
 };
 
 const styles = {
   container: {
     minHeight: '100vh',
+    paddingBottom: '80px',
     background: '#F9F9F9',
   },
   header: {
-    background: COLORS.primary,
-    color: 'white',
-    padding: '20px',
-  },
-  backBtn: {
-    background: 'transparent',
-    border: 'none',
-    color: 'white',
-    fontSize: FONT_SIZES.md,
-    cursor: 'pointer',
-    marginBottom: '8px',
+    color: COLORS.accent,
+    padding: '7px',
+    textAlign: 'center',
   },
   title: {
     fontSize: FONT_SIZES.xl,
     fontWeight: 'bold',
   },
   content: {
-    padding: '20px',
+    padding: '15px',
     maxWidth: '800px',
     margin: '0 auto',
   },
