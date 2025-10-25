@@ -37,7 +37,7 @@ const BottomNav = () => {
         }
         label="Home"
         active
-        onClick={() => {}}
+        onClick={() => navigate("/receiver-home")}
       />
       <TabButton
         icon={
@@ -46,7 +46,7 @@ const BottomNav = () => {
           </svg>
         }
         label="Receive"
-        onClick={() => {}}
+        onClick={() => navigate("/find-food")}
       />
     </div>
   );
