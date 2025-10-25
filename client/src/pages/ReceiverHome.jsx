@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { signOut } from 'firebase/auth';
 import { auth } from '../config/firebase';
@@ -8,11 +8,48 @@ import { COLORS, SPACING, FONT_SIZES } from '../config/theme';
 const ReceiverHome = () => {
   const navigate = useNavigate();
   const profile = JSON.parse(localStorage.getItem('userProfile') || '{}');
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleSignOut = async () => {
-    await signOut(auth);
-    localStorage.clear();
-    navigate('/');
+    if (window.confirm('Are you sure you want to logout?')) {
+      await signOut(auth);
+      localStorage.clear();
+      navigate('/');
+    }
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+    setShowDropdown(false);
+  };
+
+  const toggleDropdown = () => {
+    setShowDropdown(!showDropdown);
+  };
+
+  // Get user's initials for avatar
+  const getInitials = (name) => {
+    if (!name) return '?';
+    const names = name.trim().split(' ');
+    if (names.length >= 2) {
+      return (names[0][0] + names[names.length - 1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
   return (
@@ -24,12 +61,46 @@ const ReceiverHome = () => {
             <h1 style={styles.greeting}>Hello, {profile.name}! 👋</h1>
             <p style={styles.subGreeting}>Welcome to Annam Mithra</p>
           </div>
-          <button style={styles.logoutBtn} onClick={handleSignOut}>
-            Logout
-          </button>
+          
+          {/* Profile Dropdown */}
+          <div style={styles.profileContainer} ref={dropdownRef}>
+            <div style={styles.profileAvatar} onClick={toggleDropdown}>
+              <span style={styles.profileInitials}>{getInitials(profile.name)}</span>
+            </div>
+
+            {showDropdown && (
+              <div style={styles.dropdown}>
+                <div style={styles.dropdownHeader}>
+                  <div style={styles.dropdownAvatar}>
+                    {getInitials(profile.name)}
+                  </div>
+                  <div style={styles.dropdownUserInfo}>
+                    <div style={styles.dropdownName}>{profile.name}</div>
+                    <div style={styles.dropdownEmail}>{profile.email}</div>
+                  </div>
+                </div>
+                
+                <div style={styles.dropdownDivider}></div>
+                
+                <div style={styles.dropdownMenu}>
+                  <div style={styles.dropdownItem} onClick={handleProfileClick}>
+                    <span style={styles.dropdownIcon}>👤</span>
+                    <span>Profile</span>
+                  </div>
+                  <div 
+                    style={{ ...styles.dropdownItem, ...styles.dropdownItemLogout }} 
+                    onClick={handleSignOut}
+                  >
+                    <span style={styles.dropdownIcon}>🚪</span>
+                    <span>Logout</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
+      <br></br>
       {/* Stats Cards */}
       <div style={styles.statsContainer}>
         <StatCard icon="🍲" value="0" label="Food Received" />
@@ -96,7 +167,7 @@ const styles = {
     background: '#F9F9F9',
   },
   header: {
-    background: COLORS.primary,
+    background: COLORS.primary || '#7C9D3D',
     color: 'white',
     padding: '20px',
   },
@@ -106,23 +177,118 @@ const styles = {
     alignItems: 'flex-start',
   },
   greeting: {
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.xl || '24px',
     fontWeight: 'bold',
     marginBottom: '4px',
   },
   subGreeting: {
-    fontSize: FONT_SIZES.sm,
+    fontSize: FONT_SIZES.sm || '14px',
     opacity: 0.9,
   },
-  logoutBtn: {
-    background: 'rgba(255,255,255,0.2)',
-    border: 'none',
-    color: 'white',
-    padding: '8px 16px',
-    borderRadius: '6px',
-    cursor: 'pointer',
-    fontSize: FONT_SIZES.sm,
+  
+  // Profile Avatar & Dropdown Styles
+  profileContainer: {
+    position: 'relative',
   },
+  profileAvatar: {
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    background: 'rgba(255, 255, 255, 0.2)',
+    border: '2px solid rgba(255, 255, 255, 0.4)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    backdropFilter: 'blur(10px)',
+  },
+  profileInitials: {
+    fontSize: '14px',
+    fontWeight: 'bold',
+    color: 'white',
+    userSelect: 'none',
+  },
+  dropdown: {
+    position: 'absolute',
+    top: '50px',
+    right: '0',
+    background: 'white',
+    borderRadius: '12px',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+    minWidth: '260px',
+    overflow: 'hidden',
+    zIndex: 1000,
+    animation: 'dropdownSlideIn 0.2s ease',
+  },
+  dropdownHeader: {
+    padding: '16px',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    background: 'rgba(124, 157, 61, 0.05)',
+  },
+  dropdownAvatar: {
+    width: '48px',
+    height: '48px',
+    borderRadius: '50%',
+    background: COLORS.primary || '#7C9D3D',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    fontSize: '18px',
+    fontWeight: 'bold',
+    color: 'white',
+    flexShrink: 0,
+  },
+  dropdownUserInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+  dropdownName: {
+    fontSize: '15px',
+    fontWeight: '600',
+    color: COLORS.text || '#2C3E50',
+    marginBottom: '2px',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  dropdownEmail: {
+    fontSize: '12px',
+    color: COLORS.textLight || '#7F8C8D',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  dropdownDivider: {
+    height: '1px',
+    background: '#E0E0E0',
+    margin: '0',
+  },
+  dropdownMenu: {
+    padding: '8px',
+  },
+  dropdownItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '12px 16px',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    fontSize: '14px',
+    fontWeight: '500',
+    color: COLORS.text || '#2C3E50',
+  },
+  dropdownItemLogout: {
+    color: '#E74C3C',
+  },
+  dropdownIcon: {
+    fontSize: '18px',
+  },
+  
+  // Existing styles
   statsContainer: {
     display: 'grid',
     gridTemplateColumns: 'repeat(3, 1fr)',
@@ -142,22 +308,22 @@ const styles = {
     marginBottom: '8px',
   },
   statValue: {
-    fontSize: FONT_SIZES.xl,
+    fontSize: FONT_SIZES.xl || '24px',
     fontWeight: 'bold',
-    color: COLORS.primary,
+    color: COLORS.primary || '#7C9D3D',
     marginBottom: '4px',
   },
   statLabel: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.textLight,
+    fontSize: FONT_SIZES.xs || '12px',
+    color: COLORS.textLight || '#7F8C8D',
   },
   section: {
     padding: '20px',
   },
   sectionTitle: {
-    fontSize: FONT_SIZES.lg,
+    fontSize: FONT_SIZES.lg || '18px',
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.text || '#2C3E50',
     marginBottom: '16px',
   },
   actionCard: {
@@ -179,18 +345,18 @@ const styles = {
     flex: 1,
   },
   actionTitle: {
-    fontSize: FONT_SIZES.md,
+    fontSize: FONT_SIZES.md || '16px',
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.text || '#2C3E50',
     marginBottom: '4px',
   },
   actionDesc: {
-    fontSize: FONT_SIZES.xs,
-    color: COLORS.textLight,
+    fontSize: FONT_SIZES.xs || '12px',
+    color: COLORS.textLight || '#7F8C8D',
   },
   actionArrow: {
     fontSize: '20px',
-    color: COLORS.primary,
+    color: COLORS.primary || '#7C9D3D',
   },
   emptyState: {
     background: 'white',
@@ -203,14 +369,34 @@ const styles = {
     marginBottom: '16px',
   },
   emptyText: {
-    fontSize: FONT_SIZES.md,
-    color: COLORS.text,
+    fontSize: FONT_SIZES.md || '16px',
+    color: COLORS.text || '#2C3E50',
     marginBottom: '8px',
   },
   emptySubtext: {
-    fontSize: FONT_SIZES.sm,
-    color: COLORS.textLight,
+    fontSize: FONT_SIZES.sm || '14px',
+    color: COLORS.textLight || '#7F8C8D',
   },
 };
+
+// Add CSS animation for dropdown (add this to your global CSS or App.css)
+const styleSheet = document.styleSheets[0];
+const keyframes = `
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+`;
+try {
+  styleSheet.insertRule(keyframes, styleSheet.cssRules.length);
+} catch (e) {
+  // Ignore if already exists
+}
 
 export default ReceiverHome;
