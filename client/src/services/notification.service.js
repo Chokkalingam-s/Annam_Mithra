@@ -1,6 +1,6 @@
 // client/src/services/notification.service.js
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
-import { app, auth } from "../config/firebase"; // ← Import auth too
+import { app, auth } from "../config/firebase";
 
 const messaging = getMessaging(app);
 const VAPID_KEY = import.meta.env.VITE_VAPID_KEY;
@@ -19,7 +19,7 @@ export const requestNotificationPermission = async () => {
       });
 
       if (token) {
-        console.log("📱 FCM Token:", token);
+        console.log("📱 FCM Token obtained:", token.substring(0, 20) + "...");
         return token;
       } else {
         console.log("❌ No registration token available");
@@ -47,38 +47,48 @@ export const onMessageListener = () =>
 // Save FCM token to backend
 export const saveFCMToken = async (token) => {
   try {
-    // ✅ FIX: Get Firebase auth token
+    console.log("💾 Saving FCM token to backend...");
+
     const user = auth.currentUser;
     if (!user) {
       console.error("❌ No user logged in");
-      return null;
+      return { success: false, message: "No user logged in" };
     }
 
     const authToken = await user.getIdToken();
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
+    console.log("📤 Sending token to:", `${apiUrl}/notifications/fcm-token`);
+
     const response = await fetch(`${apiUrl}/notifications/fcm-token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`, // ✅ Correct Firebase token
+        Authorization: `Bearer ${authToken}`,
       },
       body: JSON.stringify({ fcmToken: token }),
     });
 
     const data = await response.json();
-    console.log("✅ FCM Token saved to backend:", data);
-    return data;
+
+    if (response.ok) {
+      console.log("✅ FCM Token saved to backend:", data);
+      return data;
+    } else {
+      console.error("❌ Failed to save FCM token:", data);
+      return data;
+    }
   } catch (error) {
     console.error("❌ Error saving FCM token:", error);
-    return null;
+    return { success: false, message: error.message };
   }
 };
 
 // Send test notification (calls backend)
 export const sendTestNotification = async () => {
   try {
-    // ✅ FIX: Get Firebase auth token
+    console.log("🧪 Sending test notification...");
+
     const user = auth.currentUser;
     if (!user) {
       console.error("❌ No user logged in");
@@ -88,11 +98,16 @@ export const sendTestNotification = async () => {
     const authToken = await user.getIdToken();
     const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
 
+    console.log(
+      "📤 Requesting test notification from:",
+      `${apiUrl}/notifications/test`,
+    );
+
     const response = await fetch(`${apiUrl}/notifications/test`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        Authorization: `Bearer ${authToken}`, // ✅ Correct Firebase token
+        Authorization: `Bearer ${authToken}`,
       },
     });
 

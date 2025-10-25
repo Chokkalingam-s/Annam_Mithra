@@ -11,15 +11,10 @@ const NotificationSetup = () => {
   const [notification, setNotification] = useState(null);
   const [show, setShow] = useState(false);
   const [showPermissionPrompt, setShowPermissionPrompt] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Check if permission already granted
-    if (Notification.permission === "granted") {
-      setupNotifications();
-    } else if (Notification.permission === "default") {
-      // Show prompt to user
-      setShowPermissionPrompt(true);
-    }
+    checkAndSetupNotifications();
 
     // Listen for foreground messages
     onMessageListener()
@@ -37,18 +32,86 @@ const NotificationSetup = () => {
       .catch((err) => console.log("Failed to receive message:", err));
   }, []);
 
+  const checkAndSetupNotifications = async () => {
+    console.log("🔍 Checking notification status...");
+    console.log("📋 Permission:", Notification.permission);
+
+    // Check if permission is granted
+    if (Notification.permission === "granted") {
+      console.log("✅ Permission granted, checking token...");
+
+      // Try to get/refresh token
+      try {
+        await setupNotifications();
+      } catch (error) {
+        console.error("❌ Error setting up notifications:", error);
+        // Token might be invalid, show prompt
+        setShowPermissionPrompt(true);
+      }
+    } else if (Notification.permission === "default") {
+      // Permission not requested yet
+      console.log("⏳ Permission not requested, showing prompt");
+      setShowPermissionPrompt(true);
+    } else {
+      // Permission denied
+      console.log("⛔ Permission denied");
+    }
+  };
+
   const setupNotifications = async () => {
     const token = await requestNotificationPermission();
     if (token) {
-      await saveFCMToken(token);
-      localStorage.setItem("fcmToken", token);
-      setShowPermissionPrompt(false);
+      const result = await saveFCMToken(token);
+      if (result && result.success) {
+        localStorage.setItem("fcmToken", token);
+        console.log("✅ Notifications setup complete");
+      } else {
+        console.error("❌ Failed to save token");
+      }
     }
   };
 
   const handleEnableNotifications = async () => {
-    await setupNotifications();
+    setIsLoading(true);
+
+    // Close dialog immediately
+    setShowPermissionPrompt(false);
+
+    // Setup notifications in background
+    try {
+      await setupNotifications();
+      console.log("✅ Notifications enabled successfully");
+    } catch (error) {
+      console.error("❌ Error enabling notifications:", error);
+      // Show prompt again if failed
+      setTimeout(() => setShowPermissionPrompt(true), 1000);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleNotNow = () => {
+    setShowPermissionPrompt(false);
+  };
+
+  const handleReEnable = () => {
+    // Force show the prompt again
+    setShowPermissionPrompt(true);
+  };
+
+  // Add global error handler for invalid token errors
+  useEffect(() => {
+    const handleInvalidToken = () => {
+      console.log("🔄 Invalid token detected, showing re-enable prompt");
+      setShowPermissionPrompt(true);
+    };
+
+    window.addEventListener("fcm-token-invalid", handleInvalidToken);
+
+    return () => {
+      window.removeEventListener("fcm-token-invalid", handleInvalidToken);
+    };
+  }, []);
 
   if (!show && !notification && !showPermissionPrompt) return null;
 
@@ -66,13 +129,23 @@ const NotificationSetup = () => {
             <div style={styles.promptButtons}>
               <button
                 onClick={handleEnableNotifications}
-                style={styles.enableBtn}
+                disabled={isLoading}
+                style={{
+                  ...styles.enableBtn,
+                  opacity: isLoading ? 0.6 : 1,
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                }}
               >
-                Enable Notifications
+                {isLoading ? "Enabling..." : "Enable Notifications"}
               </button>
               <button
-                onClick={() => setShowPermissionPrompt(false)}
-                style={styles.cancelBtn}
+                onClick={handleNotNow}
+                disabled={isLoading}
+                style={{
+                  ...styles.cancelBtn,
+                  opacity: isLoading ? 0.6 : 1,
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                }}
               >
                 Not Now
               </button>
@@ -110,7 +183,6 @@ const NotificationSetup = () => {
 };
 
 const styles = {
-  // Permission prompt styles
   promptContainer: {
     position: "fixed",
     top: 0,
@@ -128,6 +200,7 @@ const styles = {
     borderRadius: "16px",
     padding: "24px",
     maxWidth: "400px",
+    width: "90%",
     margin: "20px",
     boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
   },
@@ -157,6 +230,7 @@ const styles = {
     fontSize: "14px",
     fontWeight: "600",
     cursor: "pointer",
+    transition: "all 0.2s",
   },
   cancelBtn: {
     flex: 1,
@@ -168,9 +242,8 @@ const styles = {
     fontSize: "14px",
     fontWeight: "600",
     cursor: "pointer",
+    transition: "all 0.2s",
   },
-
-  // Notification display styles
   container: {
     position: "fixed",
     top: "20px",

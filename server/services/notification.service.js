@@ -5,6 +5,10 @@ class NotificationService {
   // Send notification to single device
   async sendToDevice(token, notification, data = {}) {
     try {
+      console.log("📤 Attempting to send notification...");
+      console.log("📱 To token:", token.substring(0, 20) + "...");
+      console.log("📝 Title:", notification.title);
+
       const message = {
         token: token,
         notification: {
@@ -27,8 +31,19 @@ class NotificationService {
       console.log("✅ Notification sent successfully:", response);
       return { success: true, messageId: response };
     } catch (error) {
-      console.error("❌ Error sending notification:", error);
-      return { success: false, error: error.message };
+      console.error("❌ Firebase messaging error:", error.code);
+      console.error("❌ Error details:", error.message);
+
+      // More descriptive error messages
+      let userMessage = error.message;
+      if (error.code === "messaging/invalid-registration-token") {
+        userMessage = "Invalid FCM token. Please enable notifications again.";
+      } else if (error.code === "messaging/registration-token-not-registered") {
+        userMessage =
+          "FCM token not registered. Please enable notifications again.";
+      }
+
+      return { success: false, error: userMessage };
     }
   }
 
@@ -53,7 +68,7 @@ class NotificationService {
     }
   }
 
-  // Send to topic (e.g., all donors, all receivers)
+  // Send to topic
   async sendToTopic(topic, notification, data = {}) {
     try {
       const message = {

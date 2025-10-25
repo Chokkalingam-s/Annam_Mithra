@@ -9,10 +9,14 @@ exports.saveFCMToken = async (req, res) => {
     const { fcmToken } = req.body;
     const firebaseUid = req.user.uid;
 
+    console.log("💾 Saving FCM token for user:", firebaseUid);
+    console.log("📱 Token:", fcmToken.substring(0, 20) + "...");
+
     // Find and update user with FCM token
     const user = await User.findOne({ where: { firebaseUid } });
 
     if (!user) {
+      console.error("❌ User not found:", firebaseUid);
       return res.status(404).json({
         success: false,
         message: "User not found",
@@ -21,7 +25,7 @@ exports.saveFCMToken = async (req, res) => {
 
     await user.update({ fcmToken });
 
-    console.log("✅ FCM token saved for user:", user.email);
+    console.log("✅ FCM token saved successfully for:", user.email);
 
     res.status(200).json({
       success: true,
@@ -42,21 +46,33 @@ exports.sendTestNotification = async (req, res) => {
   try {
     const firebaseUid = req.user.uid;
 
+    console.log("🧪 Test notification requested for user:", firebaseUid);
+
     const user = await User.findOne({ where: { firebaseUid } });
 
     if (!user) {
+      console.error("❌ User not found:", firebaseUid);
       return res.status(404).json({
         success: false,
         message: "User not found",
       });
     }
 
+    console.log("👤 User found:", user.email);
+    console.log(
+      "📱 FCM Token:",
+      user.fcmToken ? user.fcmToken.substring(0, 20) + "..." : "NULL",
+    );
+
     if (!user.fcmToken) {
+      console.error("❌ No FCM token found for user");
       return res.status(400).json({
         success: false,
         message: "No FCM token found. Please enable notifications.",
       });
     }
+
+    console.log("📤 Sending notification via Firebase...");
 
     // Send test notification
     const result = await notificationService.sendToDevice(
@@ -70,6 +86,8 @@ exports.sendTestNotification = async (req, res) => {
       },
     );
 
+    console.log("📬 Notification result:", result);
+
     res.status(200).json(result);
   } catch (error) {
     console.error("❌ Error sending test notification:", error);
@@ -78,42 +96,5 @@ exports.sendTestNotification = async (req, res) => {
       message: "Error sending test notification",
       error: error.message,
     });
-  }
-};
-
-// Helper function - Send notification when new donation is created
-exports.notifyNearbyReceivers = async (donation, donorName) => {
-  try {
-    // Find all active users with FCM tokens
-    const receivers = await User.findAll({
-      where: {
-        fcmToken: { [db.Sequelize.Op.ne]: null },
-        isActive: true,
-      },
-    });
-
-    if (receivers.length === 0) {
-      console.log("No receivers with FCM tokens found");
-      return;
-    }
-
-    const tokens = receivers.map((r) => r.fcmToken);
-
-    // Send notification to all receivers
-    await notificationService.sendToMultipleDevices(
-      tokens,
-      {
-        title: "🍲 New Food Donation Available!",
-        body: `${donorName} donated ${donation.foodName} in your area`,
-      },
-      {
-        donationId: donation.id.toString(),
-        url: "/home",
-      },
-    );
-
-    console.log(`✅ Notified ${receivers.length} receivers about new donation`);
-  } catch (error) {
-    console.error("❌ Error notifying receivers:", error);
   }
 };

@@ -17,7 +17,14 @@ const TestNotificationButton = () => {
       if (result?.success) {
         setMessage("✅ Test notification sent! Check your notifications.");
       } else {
-        setMessage("❌ Failed to send notification. Check console.");
+        // Check if token is invalid
+        if (result?.error && result.error.includes("not registered")) {
+          setMessage("❌ Token invalid. Please enable notifications again.");
+          // Trigger re-enable prompt
+          window.dispatchEvent(new Event("fcm-token-invalid"));
+        } else {
+          setMessage("❌ Failed to send notification: " + result?.error);
+        }
       }
     } catch (error) {
       setMessage("❌ Error: " + error.message);
@@ -69,6 +76,7 @@ const styles = {
     borderRadius: "8px",
     fontSize: "14px",
     boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    maxWidth: "300px",
   },
 };
 
