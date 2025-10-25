@@ -18,6 +18,8 @@ import ProfileSetup from "./pages/ProfileSetup";
 import ReceiverHome from "./pages/ReceiverHome";
 import DonateForm from "./pages/DonateForm";
 import Profile from "./pages/Profile";
+import ChatListPage from "./pages/ChatListPage";
+import ChatWindowPage from "./pages/ChatWindowPage";
 
 // Import notification components
 import NotificationSetup from "./components/NotificationSetup";
@@ -190,6 +192,46 @@ function App() {
               <Navigate to="/profile-setup" />
             ) : (
               <Navigate to="/welcome" />
+            )
+          }
+        />
+
+        {/* Chat routes */}
+        <Route
+          path="/messages"
+          element={
+            user && profileCompleted ? (
+              <ChatListPage />
+            ) : user ? (
+              <Navigate to="/profile-setup" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+        <Route
+          path="/chat/:chatId"
+          element={
+            user && profileCompleted ? (
+              <ChatWindowPage />
+            ) : user ? (
+              <Navigate to="/profile-setup" replace />
+            ) : (
+              <Navigate to="/login" replace />
+            )
+          }
+        />
+
+        {/* Catch all - redirect to home or welcome */}
+        <Route
+          path="*"
+          element={
+            user && profileCompleted ? (
+              <Navigate to="/receiver-home" replace />
+            ) : user ? (
+              <Navigate to="/profile-setup" replace />
+            ) : (
+              <Navigate to="/" replace />
             )
           }
         />
