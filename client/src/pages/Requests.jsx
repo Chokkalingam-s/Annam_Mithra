@@ -49,6 +49,7 @@ const Requests = () => {
     }
   };
 
+
   // ✅ NEW: Open modal when accept is clicked
   const handleAcceptClick = (request) => {
     setSelectedRequest(request);
@@ -110,6 +111,10 @@ const Requests = () => {
     }
   };
 
+    const handleChat = (donationId, receiverId) => {
+    navigate(`/chat/${donationId}/${receiverId}`);
+  };
+
   const handleDecline = async (interestId) => {
     try {
       const token = await auth.currentUser?.getIdToken();
@@ -129,9 +134,7 @@ const Requests = () => {
     }
   };
 
-  const handleChat = (donationId, receiverId) => {
-    navigate(`/chat/${donationId}/${receiverId}`);
-  };
+
 
   if (loading) {
     return (
@@ -247,11 +250,18 @@ const Requests = () => {
                     >
                       💬 Chat
                     </button>
+                    {/* Add your accept button here if needed */}
+                  </div>
+                )}
+
+                {/* Add Chat button in Sent requests so receiver can chat too */}
+                {activeTab === 'sent' && (
+                  <div style={styles.actions}>
                     <button
-                      style={styles.btnAccept}
-                      onClick={() => handleAcceptClick(request)} // ✅ Changed
+                      style={styles.btnChat}
+                      onClick={() => handleChat(request.donationId, request.donation.donor.id)}
                     >
-                      Accept
+                      💬 Chat
                     </button>
                   </div>
                 )}
@@ -266,6 +276,8 @@ const Requests = () => {
           )}
         </div>
       </div>
+
+
 
       {/* ✅ NEW: Accept Modal */}
       {showAcceptModal && selectedRequest && (

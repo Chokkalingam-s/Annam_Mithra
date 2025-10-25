@@ -33,18 +33,22 @@ db.sequelize
 
 // Socket.io connection
 io.on("connection", (socket) => {
-  console.log("New client connected:", socket.id);
+  console.log("🔌 New client connected:", socket.id);
 
-  socket.on("join_chat", (donationId) => {
-    socket.join(`donation_${donationId}`);
+  socket.on("join_chat", ({ donationId, receiverId }) => {
+    const roomId = `chat_${donationId}_${receiverId}`;
+    socket.join(roomId);
+    console.log(`✅ User joined room: ${roomId}`);
   });
 
   socket.on("send_message", (data) => {
-    io.to(`donation_${data.donationId}`).emit("receive_message", data);
+    const roomId = `chat_${data.donationId}_${data.receiverId}`;
+    io.to(roomId).emit("receive_message", data);
+    console.log(`📨 Message sent to room: ${roomId}`);
   });
 
   socket.on("disconnect", () => {
-    console.log("Client disconnected:", socket.id);
+    console.log("❌ Client disconnected:", socket.id);
   });
 });
 
@@ -57,7 +61,7 @@ app.get("/", (req, res) => {
 app.use("/api/users", require("./routes/user.routes"));
 app.use("/api/donations", require("./routes/donation.routes"));
 app.use("/api/notifications", require("./routes/notification.routes")); // ← ADD THIS LINE
-
+app.use("/api/chat", require("./routes/chat.routes")); // ✅ Add chat routes
 // Start server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => {

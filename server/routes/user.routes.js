@@ -11,6 +11,6 @@ router.get('/profile', verifyToken, userController.getProfile);
 router.put('/profile', verifyToken, userController.updateProfile);
 
 //app.use("/api/tags", require("./routes/tag.routes"));
-
+router.get('/:id', verifyToken, userController.getUserById);
 
 module.exports = router;

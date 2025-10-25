@@ -32,6 +32,9 @@ router.get('/', donationController.getDonations);
 // Update donation quantity
 router.patch('/:id/quantity', donationController.updateQuantity);
 
+router.get('/:id', verifyToken, donationController.getDonationById);
+
+
 // Create interest
 router.post('/interest', donationController.createInterest);
 

@@ -530,3 +530,32 @@ exports.updateQuantity = async (req, res) => {
     });
   }
 };
+
+exports.getDonationById = async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    const donation = await db.Donation.findByPk(id, {
+      include: [{ model: db.User, as: 'donor', attributes: ['id', 'name', 'phone'] }]
+    });
+
+    if (!donation) {
+      return res.status(404).json({
+        success: false,
+        message: 'Donation not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: donation
+    });
+  } catch (error) {
+    console.error('Error fetching donation by ID:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching donation',
+      error: error.message
+    });
+  }
+};

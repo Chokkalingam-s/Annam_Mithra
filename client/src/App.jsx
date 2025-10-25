@@ -13,6 +13,7 @@ import api from "./services/api";
 import TagMe from "./pages/TagMe";
 import CreateTag from "./pages/CreateTag";
 import Requests from './pages/Requests';
+import ChatWindow from './pages/ChatWindow';
 
 // Import pages
 import Splash from "./pages/Splash";
@@ -209,7 +210,18 @@ function App() {
     )
   }
 />
-        
+        <Route
+  path="/chat/:donationId/:receiverId"
+  element={
+    user && profileCompleted ? (
+      <ChatWindow />
+    ) : user && !profileCompleted ? (
+      <Navigate to="/profile-setup" />
+    ) : (
+      <Navigate to="/login" />
+    )
+  }
+/>
         <Route
           path="/"
           element={
