@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-const BottomNav = () => {
+const BottomNav = ({ currentPage = "home" }) => {
   const navigate = useNavigate();
 
   const TabButton = ({ icon, label, active, onClick }) => (
@@ -27,6 +27,7 @@ const BottomNav = () => {
           </svg>
         }
         label="Donate"
+        active={currentPage === "donate"}
         onClick={() => navigate("/donate")}
       />
       <TabButton
@@ -36,8 +37,8 @@ const BottomNav = () => {
           </svg>
         }
         label="Home"
-        active
-        onClick={() => navigate("/receiver-home")}
+        active={currentPage === "home"}
+        onClick={() => navigate("/home")}
       />
       <TabButton
         icon={
@@ -46,6 +47,7 @@ const BottomNav = () => {
           </svg>
         }
         label="Receive"
+        active={currentPage === "receive"}
         onClick={() => navigate("/find-food")}
       />
     </div>
