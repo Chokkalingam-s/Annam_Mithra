@@ -3,6 +3,8 @@ import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-map
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../config/firebase';
 import api from '../services/api';
+import Header from "../components/receiver/Header";
+import BottomNav from "../components/receiver/BottomNav";
 
 const TagMe = () => {
   const navigate = useNavigate();
@@ -129,10 +131,8 @@ const TagMe = () => {
   return (
     <div style={styles.container}>
       {/* Header */}
+      <Header />
       <div style={styles.header}>
-        <button style={styles.backBtn} onClick={() => navigate(-1)}>
-          ← Back
-        </button>
         <h1 style={styles.title}>Tag Me</h1>
         <div style={styles.placeholder}></div>
       </div>
