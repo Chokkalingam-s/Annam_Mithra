@@ -6,6 +6,7 @@ import {
   Route,
   Navigate,
 } from "react-router-dom";
+import { LoadScript } from "@react-google-maps/api"; // ✅ Add this import
 import { auth } from "./config/firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import api from "./services/api";
@@ -23,11 +24,8 @@ import Profile from "./pages/Profile";
 import ChatListPage from "./pages/ChatListPage";
 import ChatWindowPage from "./pages/ChatWindowPage";
 
-
 // Import notification components
 import NotificationSetup from "./components/NotificationSetup";
-// ❌ REMOVE THIS LINE:
-// import TestNotificationButton from "./components/TestNotificationButton";
 
 import "./App.css";
 import Welcome from "./pages/Welcome";
@@ -105,98 +103,99 @@ function App() {
   }
 
   return (
-    <Router>
-      <NotificationSetup />
-      {/* ❌ REMOVE THIS LINE: */}
-      {/* <TestNotificationButton /> */}
+    // ✅ Wrap everything with LoadScript (ONCE for entire app)
+    <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+      <Router>
+        <NotificationSetup />
 
-      <Routes>
-        <Route path="/welcome" element={<Welcome />} />
-        <Route
-          path="/login"
-          element={!user ? <Login /> : <Navigate to="/home" />}
-        />
-        <Route
-          path="/signup"
-          element={!user ? <Signup /> : <Navigate to="/home" />}
-        />
-        <Route
-          path="/profile-setup"
-          element={
-            user && !profileCompleted ? (
-              <ProfileSetup />
-            ) : user && profileCompleted ? (
-              <Navigate to="/home" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route
-          path="/home"
-          element={
-            user && profileCompleted ? (
-              <ReceiverHome />
-            ) : user && !profileCompleted ? (
-              <Navigate to="/profile-setup" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route
-          path="/donate"
-          element={
-            user && profileCompleted ? (
-              <DonateForm />
-            ) : user && !profileCompleted ? (
-              <Navigate to="/profile-setup" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route
-          path="/find-food"
-          element={
-            user && profileCompleted ? (
-              <FindFoodNearby />
-            ) : user && !profileCompleted ? (
-              <Navigate to="/profile-setup" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            user && profileCompleted ? (
-              <Profile />
-            ) : user && !profileCompleted ? (
-              <Navigate to="/profile-setup" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
-        <Route
-          path="/"
-          element={
-            user && profileCompleted ? (
-              <Navigate to="/home" />
-            ) : user && !profileCompleted ? (
-              <Navigate to="/profile-setup" />
-            ) : (
-              <Navigate to="/welcome" />
-            )
-          }
-        />
-        
-        <Route path="/tag-me" element={<TagMe />} />
-        <Route path="/tag-me/create" element={<CreateTag />} />
-      </Routes>
-    </Router>
+        <Routes>
+          <Route path="/welcome" element={<Welcome />} />
+          <Route
+            path="/login"
+            element={!user ? <Login /> : <Navigate to="/home" />}
+          />
+          <Route
+            path="/signup"
+            element={!user ? <Signup /> : <Navigate to="/home" />}
+          />
+          <Route
+            path="/profile-setup"
+            element={
+              user && !profileCompleted ? (
+                <ProfileSetup />
+              ) : user && profileCompleted ? (
+                <Navigate to="/home" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/home"
+            element={
+              user && profileCompleted ? (
+                <ReceiverHome />
+              ) : user && !profileCompleted ? (
+                <Navigate to="/profile-setup" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/donate"
+            element={
+              user && profileCompleted ? (
+                <DonateForm />
+              ) : user && !profileCompleted ? (
+                <Navigate to="/profile-setup" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/find-food"
+            element={
+              user && profileCompleted ? (
+                <FindFoodNearby />
+              ) : user && !profileCompleted ? (
+                <Navigate to="/profile-setup" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              user && profileCompleted ? (
+                <Profile />
+              ) : user && !profileCompleted ? (
+                <Navigate to="/profile-setup" />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/"
+            element={
+              user && profileCompleted ? (
+                <Navigate to="/home" />
+              ) : user && !profileCompleted ? (
+                <Navigate to="/profile-setup" />
+              ) : (
+                <Navigate to="/welcome" />
+              )
+            }
+          />
+          
+          <Route path="/tag-me" element={<TagMe />} />
+          <Route path="/tag-me/create" element={<CreateTag />} />
+        </Routes>
+      </Router>
+    </LoadScript>
   );
 }
 

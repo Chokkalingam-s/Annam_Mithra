@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { GoogleMap, Marker } from '@react-google-maps/api';
 import { auth } from '../config/firebase';
 import api from '../services/api';
 import { COLORS, FONT_SIZES } from '../config/theme';
@@ -410,7 +410,7 @@ const DonateForm = () => {
               {/* Google Map */}
               <div style={styles.formGroup}>
                 <label style={styles.formLabel}>Pin Location (Click on map or drag marker)</label>
-                <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+                
                   <GoogleMap
                     mapContainerStyle={mapContainerStyle}
                     center={mapCenter}
@@ -436,7 +436,7 @@ const DonateForm = () => {
                       />
                     )}
                   </GoogleMap>
-                </LoadScript>
+                
                 <button 
                   style={styles.gpsBtn}
                   onClick={getCurrentLocation}
