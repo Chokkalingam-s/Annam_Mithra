@@ -10,23 +10,6 @@ const Welcome = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = React.useState(false);
 
-  const handleGoogleSignIn = async () => {
-    try {
-      setLoading(true);
-      const provider = new GoogleAuthProvider();
-      const result = await signInWithPopup(auth, provider);
-
-      const savedProfile = localStorage.getItem("userProfile");
-      if (!savedProfile) {
-        navigate("/profile-setup");
-      }
-    } catch (error) {
-      alert("Sign in failed: " + error.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <>
       <style>{styles.animations}</style>
@@ -126,7 +109,7 @@ const Welcome = () => {
             </p>
 
             <Button
-              onClick={handleGoogleSignIn}
+              onClick={() => navigate('/login')}
               loading={loading}
               variant="primary"
               style={styles.ctaButton}

@@ -23,6 +23,7 @@ import NotificationSetup from "./components/NotificationSetup";
 import TestNotificationButton from "./components/TestNotificationButton";
 
 import "./App.css";
+import Welcome from "./pages/Welcome";
 
 function App() {
   const [user, setUser] = useState(null);
@@ -123,7 +124,7 @@ function App() {
           path="/"
           element={
             !user ? (
-              <Login />
+              <Welcome />
             ) : (
               <Navigate to={profileCompleted ? "/home" : "/profile-setup"} />
             )
@@ -134,6 +135,17 @@ function App() {
           element={
             !user ? (
               <Signup />
+            ) : (
+              <Navigate to={profileCompleted ? "/home" : "/profile-setup"} />
+            )
+          }
+        />
+
+        <Route
+          path="/login"
+          element={
+            !user ? (
+              <Login />
             ) : (
               <Navigate to={profileCompleted ? "/home" : "/profile-setup"} />
             )
