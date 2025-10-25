@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleMap, LoadScript, Marker } from '@react-google-maps/api';
+import { GoogleMap, Marker } from '@react-google-maps/api';
 import { auth } from '../config/firebase';
 import Button from '../components/Button';
 import Input from '../components/Input';
@@ -301,7 +301,7 @@ const ProfileSetup = () => {
           {/* Google Map */}
           <div style={styles.formGroup}>
             <label style={styles.label}>Pin Your Location</label>
-            <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
+            
               <GoogleMap
                 mapContainerStyle={mapContainerStyle}
                 center={mapCenter}
@@ -327,7 +327,7 @@ const ProfileSetup = () => {
                   />
                 )}
               </GoogleMap>
-            </LoadScript>
+            
             <button 
               type="button"
               style={styles.gpsBtn}
