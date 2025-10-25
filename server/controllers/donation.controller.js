@@ -241,3 +241,163 @@ exports.createInterest = async (req, res) => {
   }
 };
 
+// Get interests received (for donors)
+exports.getReceivedInterests = async (req, res) => {
+  try {
+    const firebaseUid = req.user ? req.user.uid : req.body.firebaseUid;
+    const user = await User.findOne({ where: { firebaseUid } });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Get all donations by this user
+    const donations = await Donation.findAll({
+      where: { donorId: user.id },
+      include: [{
+        model: db.Interest,
+        as: 'interests',
+        include: [{
+          model: User,
+          as: 'receiver',
+          attributes: ['id', 'name', 'phone']
+        }]
+      }]
+    });
+
+    // Flatten interests from all donations
+    const interests = donations.flatMap(donation => 
+      donation.interests.map(interest => ({
+        ...interest.toJSON(),
+        donation: {
+          id: donation.id,
+          foodName: donation.foodName,
+          foodType: donation.foodType,
+          quantity: donation.quantity
+        }
+      }))
+    );
+
+    res.status(200).json({
+      success: true,
+      data: interests
+    });
+
+  } catch (error) {
+    console.error('Error fetching received interests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching received interests',
+      error: error.message
+    });
+  }
+};
+
+// Get interests sent (for receivers)
+exports.getSentInterests = async (req, res) => {
+  try {
+    const firebaseUid = req.user ? req.user.uid : req.body.firebaseUid;
+    const user = await User.findOne({ where: { firebaseUid } });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    const interests = await db.Interest.findAll({
+      where: { receiverId: user.id },
+      include: [{
+        model: Donation,
+        as: 'donation',
+        include: [{
+          model: User,
+          as: 'donor',
+          attributes: ['id', 'name', 'phone']
+        }]
+      }],
+      order: [['createdAt', 'DESC']]
+    });
+
+    res.status(200).json({
+      success: true,
+      data: interests
+    });
+
+  } catch (error) {
+    console.error('Error fetching sent interests:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching sent interests',
+      error: error.message
+    });
+  }
+};
+
+// Accept interest
+exports.acceptInterest = async (req, res) => {
+  try {
+    const { interestId, donationId } = req.body;
+
+    const interest = await db.Interest.findByPk(interestId);
+    if (!interest) {
+      return res.status(404).json({
+        success: false,
+        message: 'Interest not found'
+      });
+    }
+
+    interest.status = 'accepted';
+    await interest.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Interest accepted',
+      data: interest
+    });
+
+  } catch (error) {
+    console.error('Error accepting interest:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error accepting interest',
+      error: error.message
+    });
+  }
+};
+
+// Decline interest
+exports.declineInterest = async (req, res) => {
+  try {
+    const { interestId } = req.body;
+
+    const interest = await db.Interest.findByPk(interestId);
+    if (!interest) {
+      return res.status(404).json({
+        success: false,
+        message: 'Interest not found'
+      });
+    }
+
+    interest.status = 'declined';
+    await interest.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Interest declined',
+      data: interest
+    });
+
+  } catch (error) {
+    console.error('Error declining interest:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error declining interest',
+      error: error.message
+    });
+  }
+};

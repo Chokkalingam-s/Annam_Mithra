@@ -7,23 +7,34 @@ module.exports = (sequelize, Sequelize) => {
     },
     donationId: {
       type: Sequelize.INTEGER,
-      allowNull: false
+      allowNull: false,
+      references: {
+        model: 'donations',
+        key: 'id'
+      }
     },
     receiverId: {
       type: Sequelize.INTEGER,
-      allowNull: false
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
     },
     message: {
-      type: Sequelize.TEXT
+      type: Sequelize.TEXT,
+      allowNull: true
     },
     quantityRequested: {
       type: Sequelize.INTEGER,
-      allowNull: false
+      allowNull: true
     },
     status: {
-      type: Sequelize.ENUM('pending', 'accepted', 'rejected', 'completed'),
+      type: Sequelize.ENUM('pending', 'accepted', 'declined', 'completed'),
       defaultValue: 'pending'
     }
+  }, {
+    timestamps: true
   });
 
   return Interest;

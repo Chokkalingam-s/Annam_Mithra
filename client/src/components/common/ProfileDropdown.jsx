@@ -19,6 +19,11 @@ const ProfileDropdown = ({ profile, getInitials, onClose }) => {
     onClose();
   };
 
+  const handleRequestsClick = () => {
+    navigate("/requests");
+    onClose();
+  };
+
   return (
     <div style={styles.dropdown}>
       <div style={styles.dropdownHeader}>
@@ -45,7 +50,7 @@ const ProfileDropdown = ({ profile, getInitials, onClose }) => {
         <span>My Profile</span>
       </div>
 
-      <div style={styles.dropdownItem}>
+      <div style={styles.dropdownItem} onClick={handleRequestsClick}>
         <svg
           style={styles.dropdownIcon}
           viewBox="0 0 24 24"

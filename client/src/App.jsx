@@ -12,6 +12,7 @@ import { onAuthStateChanged } from "firebase/auth";
 import api from "./services/api";
 import TagMe from "./pages/TagMe";
 import CreateTag from "./pages/CreateTag";
+import Requests from './pages/Requests';
 
 // Import pages
 import Splash from "./pages/Splash";
@@ -191,6 +192,18 @@ function App() {
             }
           />
           
+          <Route
+  path="/requests"
+  element={
+    user && profileCompleted ? (
+      <Requests />
+    ) : user && !profileCompleted ? (
+      <Navigate to="/profile-setup" />
+    ) : (
+      <Navigate to="/login" />
+    )
+  }
+/>
           <Route path="/tag-me" element={<TagMe />} />
           <Route path="/tag-me/create" element={<CreateTag />} />
         </Routes>

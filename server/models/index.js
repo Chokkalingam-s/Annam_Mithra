@@ -25,14 +25,19 @@ db.Interest = require("./interest.model.js")(sequelize, Sequelize);
 db.Chat = require("./chat.model.js")(sequelize, Sequelize);
 db.Delivery = require("./delivery.model.js")(sequelize, Sequelize);
 db.Badge = require("./badge.model.js")(sequelize, Sequelize);
+db.Tag = require("./tag.model.js")(sequelize, Sequelize);
+db.TagVerification = require("./tagVerification.model.js")(sequelize, Sequelize);
 
 // Define associations
 db.User.hasMany(db.Donation, { foreignKey: 'donorId', as: 'donations' });
 db.Donation.belongsTo(db.User, { foreignKey: 'donorId', as: 'donor' });
 
 db.Donation.hasMany(db.Interest, { foreignKey: 'donationId', as: 'interests' });
-db.Interest.belongsTo(db.Donation, { foreignKey: 'donationId' });
+db.Interest.belongsTo(db.Donation, { foreignKey: 'donationId', as: 'donation' }); // ✅ Add 'as: donation'
 db.Interest.belongsTo(db.User, { foreignKey: 'receiverId', as: 'receiver' });
+
+// ✅ ADD THIS LINE - Allow User to query their received interests
+db.User.hasMany(db.Interest, { foreignKey: 'receiverId', as: 'receivedInterests' });
 
 db.Donation.hasMany(db.Chat, { foreignKey: 'donationId' });
 db.Chat.belongsTo(db.User, { foreignKey: 'senderId', as: 'sender' });
@@ -41,12 +46,7 @@ db.Chat.belongsTo(db.User, { foreignKey: 'receiverId', as: 'receiver' });
 db.User.hasMany(db.Badge, { foreignKey: 'userId' });
 db.Badge.belongsTo(db.User, { foreignKey: 'userId' });
 
-module.exports = db;
-
-db.Tag = require("./tag.model.js")(sequelize, Sequelize);
-db.TagVerification = require("./tagVerification.model.js")(sequelize, Sequelize);
-
-// Relationships
+// Tag Relationships
 db.Tag.belongsTo(db.User, {
   foreignKey: 'userId',
   as: 'creator'
@@ -66,3 +66,5 @@ db.Tag.hasMany(db.TagVerification, {
   foreignKey: 'tagId',
   as: 'verifications'
 });
+
+module.exports = db;

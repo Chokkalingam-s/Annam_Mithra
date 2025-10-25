@@ -3,19 +3,20 @@ const router = express.Router();
 const donationController = require('../controllers/donation.controller');
 const upload = require('../middleware/upload.middleware');
 
-// Get nearby donations - MUST BE BEFORE GET /
-router.get('/nearby', donationController.getNearbyDonations);
-
 // Create donation with image upload
 router.post('/', upload.single('foodImage'), donationController.createDonation);
 
 // Get all donations
 router.get('/', donationController.getDonations);
 
-// Create interest
+// Get nearby donations
+router.get('/nearby', donationController.getNearbyDonations);
+
+// Interest routes
 router.post('/interest', donationController.createInterest);
-
-//app.use("/api/tags", require("./routes/tag.routes"));
-
+router.get('/interests/received', donationController.getReceivedInterests);
+router.get('/interests/sent', donationController.getSentInterests);
+router.post('/interests/accept', donationController.acceptInterest);
+router.post('/interests/decline', donationController.declineInterest);
 
 module.exports = router;

@@ -23,7 +23,7 @@ app.use("/uploads", express.static("uploads"));
 // Database
 const db = require("./models");
 db.sequelize
-  .sync({ force: true }) // ← Change to force: true
+  .sync({ alter: true })// ← Change to force: true
   .then(() => {
     console.log("✅ Database synced successfully (FRESH)");
   })
