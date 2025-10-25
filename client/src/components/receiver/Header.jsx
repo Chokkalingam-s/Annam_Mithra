@@ -47,7 +47,7 @@ const Header = () => {
         <div style={styles.locationText}>
           <div style={styles.locationTitle}>Annam Mithra</div>
           <div style={styles.locationSubtitle}>
-            {profile.location || "Set your location"}
+            {profile.address || "Set your location"}
           </div>
         </div>
         <svg style={styles.chevronIcon} viewBox="0 0 24 24" fill="white">
@@ -97,14 +97,14 @@ const styles = {
     flex: 1,
   },
   locationTitle: {
-    fontSize: "16px",
+    fontSize: "22px",
     fontWeight: "700",
     color: "#FFFFFF",
     letterSpacing: "-0.02em",
   },
   locationSubtitle: {
     fontSize: "12px",
-    color: "rgba(255, 255, 255, 0.85)",
+    color: "rgba(253, 253, 253, 0.87)",
     marginTop: "1px",
   },
   chevronIcon: {
