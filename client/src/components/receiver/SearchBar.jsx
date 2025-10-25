@@ -45,7 +45,7 @@ const styles = {
   searchIcon: {
     width: "20px",
     height: "20px",
-    color: "#C1693C",
+    color: "#8056baff",
     flexShrink: 0,
   },
   searchInput: {
@@ -59,7 +59,7 @@ const styles = {
   micIcon: {
     width: "20px",
     height: "20px",
-    color: "#C1693C",
+    color: "#8056baff",
     flexShrink: 0,
   },
 };

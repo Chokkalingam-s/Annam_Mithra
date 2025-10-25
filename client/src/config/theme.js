@@ -1,11 +1,11 @@
 export const COLORS = {
-  primary: '#708238',      // Olive Green
+  primary: '#845bbdff',      // Olive Green
   secondary: '#FFD700',    // Yellow
   accent: '#F4C430',       // Light Yellow
-  background: '#FFFFFF',   // White
+  background: '#dfdbdbff',   // White
   text: '#000000',         // Black
   textLight: '#666666',
-  textWhite: '#FFFFFF',
+  textWhite: '#ede2f9ff',
   error: '#FF3B30',
   success: '#34C759',
   border: '#E0E0E0',

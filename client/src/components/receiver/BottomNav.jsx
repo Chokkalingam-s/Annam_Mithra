@@ -91,7 +91,7 @@ const styles = {
     color: "#9CA3AF",
   },
   tabLabelActive: {
-    color: "#C1693C",
+    color: "#8056baff",
   },
 };
 

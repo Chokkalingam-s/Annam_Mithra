@@ -14,7 +14,7 @@ const QuoteBanner = () => {
 
 const styles = {
   quoteBanner: {
-    backgroundColor: "#FFF9E6",
+    backgroundColor: "#e7e6ffff",
     padding: "14px 16px",
     display: "flex",
     alignItems: "center",

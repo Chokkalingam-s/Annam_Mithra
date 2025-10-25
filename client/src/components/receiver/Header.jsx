@@ -77,7 +77,7 @@ const Header = () => {
 
 const styles = {
   topBar: {
-    background: "#C1693C",
+    background: "#8056baff",
     padding: "12px 16px",
     display: "flex",
     justifyContent: "space-between",
