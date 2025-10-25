@@ -103,7 +103,7 @@ const TagMe = () => {
 
   const tagIcon = {
     path: 'M 0,0 C -2,-20 -10,-22 -10,-30 A 10,10 0 1,1 10,-30 C 10,-22 2,-20 0,0 z',
-    fillColor: '#fc8019',
+    fillColor: '#8751d3ee',
     fillOpacity: 1,
     strokeColor: '#fff',
     strokeWeight: 2,
@@ -277,7 +277,7 @@ const styles = {
     width: '40px',
     height: '40px',
     border: '4px solid #f3f3f3',
-    borderTop: '4px solid #fc8019',
+    borderTop: '4px solid #8751d3ee',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     marginBottom: '16px',
@@ -295,7 +295,7 @@ const styles = {
     border: 'none',
     fontSize: '16px',
     cursor: 'pointer',
-    color: '#fc8019',
+    color: '#8751d3ee',
     fontWeight: '600',
   },
   title: {
@@ -308,7 +308,7 @@ const styles = {
     width: '40px',
   },
   infoBanner: {
-    background: 'linear-gradient(135deg, #fc8019 0%, #ff9f47 100%)',
+    background: 'linear-gradient(135deg, #5d19fcff 0%, #ff4747ff 100%)',
     padding: '20px',
     display: 'flex',
     gap: '16px',
@@ -346,7 +346,7 @@ const styles = {
   statValue: {
     fontSize: '24px',
     fontWeight: 'bold',
-    color: '#fc8019',
+    color: '#8751d3ee',
     marginBottom: '4px',
   },
   statLabel: {
@@ -359,7 +359,7 @@ const styles = {
   createBtn: {
     margin: '16px',
     padding: '14px',
-    background: '#fc8019',
+    background: '#8751d3ee',
     color: 'white',
     border: 'none',
     borderRadius: '12px',
@@ -463,7 +463,7 @@ const styles = {
   verifyBtn: {
     marginTop: '8px',
     padding: '8px 12px',
-    background: '#fc8019',
+    background: '#8751d3ee',
     color: 'white',
     border: 'none',
     borderRadius: '6px',

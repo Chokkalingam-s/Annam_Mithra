@@ -373,7 +373,7 @@ const styles = {
   },
   editBtn: {
     padding: '6px 12px',
-    background: '#fc8019',
+    background: '#8751d3ee',
     color: 'white',
     border: 'none',
     borderRadius: '6px',

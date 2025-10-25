@@ -146,10 +146,10 @@ const styles = {
     minWidth: "48px",
   },
   tabButtonActive: {
-    backgroundColor: "#C1693C",
+    backgroundColor: "#8751d3ee",
     paddingLeft: "16px",
     paddingRight: "16px",
-    boxShadow: "0 4px 12px rgba(193, 105, 60, 0.3)",
+    boxShadow: "0 4px 12px rgba(146, 55, 207, 0.3)",
   },
   tabIcon: {
     width: "24px",

@@ -268,7 +268,7 @@ const styles = {
   totalCard: {
     padding: "20px",
     margin: "16px",
-    background: "linear-gradient(135deg, #CD7F32 0%, #B87333 100%)",
+    background: "linear-gradient(135deg, #5d19fcff 0%, #ff4747ff 100%)",
     borderRadius: "20px",
     boxShadow: "0 8px 24px rgba(205, 127, 50, 0.3)",
     textAlign: "center",

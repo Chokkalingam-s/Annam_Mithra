@@ -297,7 +297,7 @@ const styles = {
     width: '40px',
     height: '40px',
     border: '4px solid #f3f3f3',
-    borderTop: '4px solid #fc8019',
+    borderTop: '4px solid #8751d3ee',
     borderRadius: '50%',
     animation: 'spin 1s linear infinite',
     marginBottom: '16px',
@@ -315,7 +315,7 @@ const styles = {
     border: 'none',
     fontSize: '16px',
     cursor: 'pointer',
-    color: '#fc8019',
+    color: '#8751d3ee',
     fontWeight: '600',
   },
   title: {
@@ -345,7 +345,7 @@ const styles = {
   },
   searchBtn: {
     padding: '12px 20px',
-    background: '#fc8019',
+    background: '#8751d3ee',
     color: 'white',
     border: 'none',
     borderRadius: '8px',
@@ -415,7 +415,7 @@ const styles = {
   submitBtn: {
     width: '100%',
     padding: '14px',
-    background: '#fc8019',
+    background: '#8751d3ee',
     color: 'white',
     border: 'none',
     borderRadius: '8px',
