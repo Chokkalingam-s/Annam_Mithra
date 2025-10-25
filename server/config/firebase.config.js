@@ -1,8 +1,9 @@
-const admin = require('firebase-admin');
+// server/config/firebase.config.js (Already exists - KEEP AS IS)
+const admin = require("firebase-admin");
 
 // Parse the private key - convert \n string to actual newlines
 const privateKey = process.env.FIREBASE_PRIVATE_KEY
-  ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n')
+  ? process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n")
   : undefined;
 
 // Initialize Firebase Admin SDK
@@ -15,5 +16,7 @@ if (!admin.apps.length) {
     }),
   });
 }
+
+console.log("✅ Firebase Admin SDK initialized");
 
 module.exports = admin;
