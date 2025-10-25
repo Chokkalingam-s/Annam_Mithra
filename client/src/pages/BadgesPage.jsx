@@ -6,14 +6,14 @@ const BadgesPage = () => {
 
   // Badge categories with their icons and counts
   const badgeCategories = [
-    { id: 1, icon: "🏆", name: "Level 6", color: "purple", unlocked: true },
-    { id: 2, icon: "🏰", name: "Battle", color: "orange", unlocked: true },
-    { id: 3, icon: "⚔️", name: "Combat", color: "gray", unlocked: true },
-    { id: 4, icon: "👑", name: "Royal", color: "blue", unlocked: true },
-    { id: 5, icon: "🦸‍♀️", name: "Hero", color: "pink", unlocked: false },
-    { id: 6, icon: "😄", name: "Champion", color: "blue", unlocked: false },
-    { id: 7, icon: "👹", name: "Monster", color: "green", unlocked: false },
-    { id: 8, icon: "💀", name: "Skull", color: "blue", unlocked: false },
+    { id: 1, icon: "🏆", name: "First Donation", color: "purple", unlocked: true },
+    { id: 2, icon: "🏰", name: "3 Donations Castle", color: "orange", unlocked: true },
+    { id: 3, icon: "⚔️", name: "5 Donations Combat", color: "gray", unlocked: true },
+    { id: 4, icon: "👑", name: "10 Donations Royal", color: "blue", unlocked: true },
+    { id: 5, icon: "🦸‍♀️", name: "Hero 15", color: "pink", unlocked: false },
+    { id: 6, icon: "😄", name: "20 Champion", color: "blue", unlocked: false },
+    { id: 7, icon: "👹", name: "25 Monster", color: "green", unlocked: false },
+    { id: 8, icon: "💀", name: "50 Skull", color: "blue", unlocked: false },
   ];
 
   // Badge color gradients
