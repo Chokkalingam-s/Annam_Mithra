@@ -1,3 +1,4 @@
+// client/src/App.jsx
 import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
@@ -20,7 +21,8 @@ import Profile from "./pages/Profile";
 
 // Import notification components
 import NotificationSetup from "./components/NotificationSetup";
-import TestNotificationButton from "./components/TestNotificationButton";
+// ❌ REMOVE THIS LINE:
+// import TestNotificationButton from "./components/TestNotificationButton";
 
 import "./App.css";
 import Welcome from "./pages/Welcome";
@@ -32,17 +34,13 @@ function App() {
   const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    // Hide splash after 2.5 seconds
     const splashTimer = setTimeout(() => {
       setShowSplash(false);
     }, 2500);
 
-    // Listen to auth state changes
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
-
-        // Check if profile exists in backend
         try {
           const token = await firebaseUser.getIdToken();
           const response = await api.get("/users/profile", {
@@ -52,7 +50,6 @@ function App() {
           });
 
           if (response.data.success && response.data.data) {
-            // Profile exists
             localStorage.setItem(
               "userProfile",
               JSON.stringify({
@@ -62,21 +59,17 @@ function App() {
             );
             setProfileCompleted(true);
           } else {
-            // No profile found
             setProfileCompleted(false);
           }
         } catch (error) {
           console.error("Profile check error:", error);
-          // If 404 or error, profile doesn't exist
           setProfileCompleted(false);
         }
       } else {
-        // User not logged in
         setUser(null);
         setProfileCompleted(false);
         localStorage.removeItem("userProfile");
       }
-
       setLoading(false);
     });
 
@@ -86,12 +79,10 @@ function App() {
     };
   }, []);
 
-  // Show splash screen
   if (showSplash) {
     return <Splash />;
   }
 
-  // Show loading
   if (loading) {
     return (
       <div
@@ -100,109 +91,92 @@ function App() {
           justifyContent: "center",
           alignItems: "center",
           height: "100vh",
-          background: "#708238",
         }}
       >
-        <div style={{ color: "white", fontSize: "18px" }}>Loading...</div>
+        Loading...
       </div>
     );
   }
 
   return (
     <Router>
-      {/* Notification Components - Only show when user is logged in */}
-      {user && (
-        <>
-          <NotificationSetup />
-          {profileCompleted && <TestNotificationButton />}
-        </>
-      )}
+      <NotificationSetup />
+      {/* ❌ REMOVE THIS LINE: */}
+      {/* <TestNotificationButton /> */}
 
       <Routes>
-        {/* Public routes - only accessible when NOT logged in */}
+        <Route path="/welcome" element={<Welcome />} />
         <Route
-          path="/"
-          element={
-            !user ? (
-              <Welcome />
-            ) : (
-              <Navigate to={profileCompleted ? "/home" : "/profile-setup"} />
-            )
-          }
+          path="/login"
+          element={!user ? <Login /> : <Navigate to="/home" />}
         />
         <Route
           path="/signup"
-          element={
-            !user ? (
-              <Signup />
-            ) : (
-              <Navigate to={profileCompleted ? "/home" : "/profile-setup"} />
-            )
-          }
+          element={!user ? <Signup /> : <Navigate to="/home" />}
         />
 
-        <Route
-          path="/login"
-          element={
-            !user ? (
-              <Login />
-            ) : (
-              <Navigate to={profileCompleted ? "/home" : "/profile-setup"} />
-            )
-          }
-        />
-
-        {/* Profile setup - only accessible when logged in WITHOUT profile */}
         <Route
           path="/profile-setup"
           element={
             user && !profileCompleted ? (
               <ProfileSetup />
+            ) : user && profileCompleted ? (
+              <Navigate to="/home" />
             ) : (
-              <Navigate to={user ? "/home" : "/"} />
+              <Navigate to="/login" />
             )
           }
         />
 
-        {/* Protected routes - only accessible when logged in WITH profile */}
         <Route
           path="/home"
           element={
             user && profileCompleted ? (
               <ReceiverHome />
+            ) : user && !profileCompleted ? (
+              <Navigate to="/profile-setup" />
             ) : (
-              <Navigate to={user ? "/profile-setup" : "/"} />
+              <Navigate to="/login" />
             )
           }
         />
+
         <Route
           path="/donate"
           element={
             user && profileCompleted ? (
               <DonateForm />
+            ) : user && !profileCompleted ? (
+              <Navigate to="/profile-setup" />
             ) : (
-              <Navigate to={user ? "/profile-setup" : "/"} />
+              <Navigate to="/login" />
             )
           }
         />
+
         <Route
           path="/profile"
           element={
             user && profileCompleted ? (
               <Profile />
+            ) : user && !profileCompleted ? (
+              <Navigate to="/profile-setup" />
             ) : (
-              <Navigate to={user ? "/profile-setup" : "/"} />
+              <Navigate to="/login" />
             )
           }
         />
 
-        {/* Catch all - redirect based on auth state */}
         <Route
-          path="*"
+          path="/"
           element={
-            <Navigate
-              to={user ? (profileCompleted ? "/home" : "/profile-setup") : "/"}
-            />
+            user && profileCompleted ? (
+              <Navigate to="/home" />
+            ) : user && !profileCompleted ? (
+              <Navigate to="/profile-setup" />
+            ) : (
+              <Navigate to="/welcome" />
+            )
           }
         />
       </Routes>
