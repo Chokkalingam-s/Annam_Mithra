@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { GoogleMap, LoadScript, Marker, InfoWindow } from '@react-google-maps/api';
+import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../config/firebase';
 import api from '../services/api';
@@ -12,6 +12,11 @@ const TagMe = () => {
   const [map, setMap] = useState(null);
   const [loading, setLoading] = useState(true);
   const [showInfoWindow, setShowInfoWindow] = useState(false);
+
+  // Use the faster useJsApiLoader hook
+  const { isLoaded } = useJsApiLoader({
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY
+  });
 
   useEffect(() => {
     getCurrentLocation();
@@ -112,7 +117,7 @@ const TagMe = () => {
     scale: 1,
   };
 
-  if (loading) {
+  if (loading || !userLocation || !isLoaded) {
     return (
       <div style={styles.loadingContainer}>
         <div style={styles.spinner}></div>
@@ -155,59 +160,57 @@ const TagMe = () => {
 
       {/* Map */}
       <div style={styles.mapSection}>
-        <LoadScript googleMapsApiKey={import.meta.env.VITE_GOOGLE_MAPS_API_KEY}>
-          <GoogleMap
-            mapContainerStyle={mapContainerStyle}
-            center={userLocation}
-            zoom={13}
-            onLoad={setMap}
-          >
-            {/* User Location */}
-            <Marker position={userLocation} icon={userIcon} title="Your Location" />
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          center={userLocation}
+          zoom={13}
+          onLoad={setMap}
+        >
+          {/* User Location */}
+          <Marker position={userLocation} icon={userIcon} title="Your Location" />
 
-            {/* Tagged Locations */}
-            {tags.map((tag) => (
-              <Marker
-                key={tag.id}
-                position={{
-                  lat: parseFloat(tag.latitude),
-                  lng: parseFloat(tag.longitude)
-                }}
-                icon={tagIcon}
-                title={tag.address}
-                onClick={() => handleMarkerClick(tag)}
-              />
-            ))}
+          {/* Tagged Locations */}
+          {tags.map((tag) => (
+            <Marker
+              key={tag.id}
+              position={{
+                lat: parseFloat(tag.latitude),
+                lng: parseFloat(tag.longitude)
+              }}
+              icon={tagIcon}
+              title={tag.address}
+              onClick={() => handleMarkerClick(tag)}
+            />
+          ))}
 
-            {/* Info Window */}
-            {showInfoWindow && selectedTag && (
-              <InfoWindow
-                position={{
-                  lat: parseFloat(selectedTag.latitude),
-                  lng: parseFloat(selectedTag.longitude)
-                }}
-                onCloseClick={() => setShowInfoWindow(false)}
-              >
-                <div style={styles.infoWindowContent}>
-                  <div style={styles.infoWindowTitle}>{selectedTag.address}</div>
-                  <div style={styles.infoWindowDesc}>{selectedTag.description}</div>
-                  <div style={styles.infoWindowMeta}>
-                    👥 ~{selectedTag.estimatedPeople} people
-                  </div>
-                  <div style={styles.infoWindowMeta}>
-                    ✓ {selectedTag.verificationCount} verifications
-                  </div>
-                  <button
-                    style={styles.verifyBtn}
-                    onClick={() => handleVerifyTag(selectedTag.id)}
-                  >
-                    Verify Location
-                  </button>
+          {/* Info Window */}
+          {showInfoWindow && selectedTag && (
+            <InfoWindow
+              position={{
+                lat: parseFloat(selectedTag.latitude),
+                lng: parseFloat(selectedTag.longitude)
+              }}
+              onCloseClick={() => setShowInfoWindow(false)}
+            >
+              <div style={styles.infoWindowContent}>
+                <div style={styles.infoWindowTitle}>{selectedTag.address}</div>
+                <div style={styles.infoWindowDesc}>{selectedTag.description}</div>
+                <div style={styles.infoWindowMeta}>
+                  👥 ~{selectedTag.estimatedPeople} people
                 </div>
-              </InfoWindow>
-            )}
-          </GoogleMap>
-        </LoadScript>
+                <div style={styles.infoWindowMeta}>
+                  ✓ {selectedTag.verificationCount} verifications
+                </div>
+                <button
+                  style={styles.verifyBtn}
+                  onClick={() => handleVerifyTag(selectedTag.id)}
+                >
+                  Verify Location
+                </button>
+              </div>
+            </InfoWindow>
+          )}
+        </GoogleMap>
       </div>
 
       {/* Create Tag Button */}
@@ -422,6 +425,7 @@ const styles = {
     color: '#9CA3AF',
     display: 'flex',
     gap: '8px',
+    flexWrap: 'wrap',
   },
   verifiedBadge: {
     position: 'absolute',
@@ -469,5 +473,15 @@ const styles = {
     width: '100%',
   },
 };
+
+// Add spinner animation
+const styleSheet = document.createElement('style');
+styleSheet.textContent = `
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(styleSheet);
 
 export default TagMe;
