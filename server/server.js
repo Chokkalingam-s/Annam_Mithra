@@ -23,7 +23,7 @@ app.use("/uploads", express.static("uploads"));
 // Database
 const db = require("./models");
 db.sequelize
-  .sync({ alter: true })// ← Change to force: true
+  .sync({ alter: true }) // ← Change to force: true
   .then(() => {
     console.log("✅ Database synced successfully (FRESH)");
   })
@@ -63,11 +63,13 @@ app.use("/api/donations", require("./routes/donation.routes"));
 app.use("/api/notifications", require("./routes/notification.routes")); // ← ADD THIS LINE
 app.use("/api/chat", require("./routes/chat.routes")); // ✅ Add chat routes
 app.use("/api/tags", require("./routes/tag.routes"));
-app.use('/api/delivery', require('./routes/delivery.routes'));
-
+app.use("/api/delivery", require("./routes/delivery.routes"));
 
 // Start server
+
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
+const HOST = "0.0.0.0";
+
+server.listen(PORT, HOST, () => {
+  console.log(`🚀 Server is running on http://${HOST}:${PORT}`);
 });
