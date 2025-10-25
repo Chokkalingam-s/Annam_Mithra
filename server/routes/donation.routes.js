@@ -34,6 +34,8 @@ router.patch('/:id/quantity', donationController.updateQuantity);
 
 router.get('/:id', verifyToken, donationController.getDonationById);
 
+// Add after your PATCH/PUT/POST/GET routes
+router.delete('/:id', donationController.deleteDonation);
 
 // Create interest
 router.post('/interest', donationController.createInterest);

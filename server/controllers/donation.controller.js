@@ -559,3 +559,32 @@ exports.getDonationById = async (req, res) => {
     });
   }
 };
+
+// Delete a donation
+exports.deleteDonation = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { firebaseUid } = req.body; // For DELETE with body (or use req.query if using query param)
+
+    const user = await User.findOne({ where: { firebaseUid } });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const donation = await Donation.findByPk(id);
+    if (!donation) {
+      return res.status(404).json({ success: false, message: 'Donation not found' });
+    }
+
+    // Only allow deletion by the donor
+    if (donation.donorId !== user.id) {
+      return res.status(403).json({ success: false, message: "You can only delete your own donations" });
+    }
+
+    await donation.destroy();
+
+    res.status(200).json({ success: true, message: "Donation deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Server error", error: error.message });
+  }
+};
