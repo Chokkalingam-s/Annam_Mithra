@@ -63,6 +63,8 @@ app.use("/api/donations", require("./routes/donation.routes"));
 app.use("/api/notifications", require("./routes/notification.routes")); // ← ADD THIS LINE
 app.use("/api/chat", require("./routes/chat.routes")); // ✅ Add chat routes
 app.use("/api/tags", require("./routes/tag.routes"));
+app.use('/api/delivery', require('./routes/delivery.routes'));
+
 
 // Start server
 const PORT = process.env.PORT || 5000;

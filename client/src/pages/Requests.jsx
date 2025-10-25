@@ -134,6 +134,21 @@ const Requests = () => {
     }
   };
 
+  const handleRequestDelivery = async (request) => {
+  try {
+    const token = await auth.currentUser?.getIdToken();
+    await api.post('/delivery/request-partner', {
+      donationId: request.donationId,
+      location: request.donation.pickupLocation
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    alert("Nearby partners notified successfully!");
+  } catch (err) {
+    alert("Failed to notify delivery partners.");
+  }
+};
+
 
 
   if (loading) {
@@ -236,28 +251,32 @@ const Requests = () => {
                   </div>
                 )}
 
-                {activeTab === 'received' && request.status === 'pending' && (
-                  <div style={styles.actions}>
-                    <button
-                      style={styles.btnDecline}
-                      onClick={() => handleDecline(request.id)}
-                    >
-                      Decline
-                    </button>
-                    <button
-                      style={styles.btnChat}
-                      onClick={() => handleChat(request.donationId, request.receiverId)}
-                    >
-                      💬 Chat
-                    </button>
-                     <button
-                      style={styles.btnAccept}
-                      onClick={() => handleAcceptClick(request)} // ✅ Changed
-                    >
-                      Accept
-                    </button>
-                  </div>
-                )}
+{activeTab === 'received' && (request.status === 'pending' || request.status === 'accepted') && (
+  <div style={styles.actions}>
+    <button
+      style={styles.btnDecline}
+      onClick={() => handleDecline(request.id)}
+      disabled={request.status === 'accepted'}
+    >
+      Decline
+    </button>
+    <button
+      style={styles.btnChat}
+      onClick={() => handleChat(request.donationId, request.receiverId)}
+    >
+      💬 Chat
+    </button>
+    {request.status === 'pending' && (
+      <button
+        style={styles.btnAccept}
+        onClick={() => handleAcceptClick(request)}
+      >
+        Accept
+      </button>
+    )}
+  </div>
+)}
+
 
                 {/* Add Chat button in Sent requests so receiver can chat too */}
                 {activeTab === 'sent' && (
@@ -276,6 +295,21 @@ const Requests = () => {
                     Status: <strong>{request.status}</strong>
                   </div>
                 )}
+
+                {activeTab === 'sent' && request.status === 'accepted' && (
+  <div style={{marginTop: 10}}>
+    <button
+      style={{
+        ...styles.btnPrimary,
+        background: "#2D9CDB"
+      }}
+      onClick={() => handleRequestDelivery(request)}
+    >
+      Request to Find Delivery Partner
+    </button>
+  </div>
+)}
+
               </div>
             ))
           )}
