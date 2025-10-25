@@ -1,25 +1,34 @@
+// src/components/receiver/ExploreSection.jsx
 import React from "react";
-import ExploreCard from "../common/ExploreCard";
+import { useNavigate } from "react-router-dom";
+import ExploreCard from "../common/ExploreCard"; // Adjust path if needed
 
 const ExploreSection = () => {
+  const navigate = useNavigate();
+
   const exploreItems = [
-    { icon: "🏷️", label: "Tag me", bgColor: "#E8F5FE" },
-    { icon: "📦", label: "Delivery", bgColor: "#FCF0E6" },
-    { icon: "🎖️", label: "Badges", bgColor: "#FEF3E0" },
-    { icon: "🌐", label: "Multilingual", bgColor: "#FFEAF4" },
+    { icon: "🏷️", label: "Tag me", bgColor: "#E8F5FE", route: "/tag-me" },
+    { icon: "📦", label: "Delivery", bgColor: "#FCF0E6", route: "/delivery" },
+    { icon: "🎖️", label: "Badges", bgColor: "#FEF3E0", route: "/badges" }, // This will navigate to BadgesPage
+    { icon: "🌐", label: "Multilingual", bgColor: "#FFEAF4", route: "/multilingual" },
   ];
+
+  const handleCardClick = (route) => {
+    navigate(route);
+  };
 
   return (
     <div style={styles.exploreSection}>
       <div style={styles.exploreTitle}>EXPLORE MORE</div>
       <div style={styles.exploreGrid}>
         {exploreItems.map((item, index) => (
-          <ExploreCard
-            key={index}
-            icon={item.icon}
-            label={item.label}
-            bgColor={item.bgColor}
-          />
+          <div key={index} onClick={() => handleCardClick(item.route)}>
+            <ExploreCard
+              icon={item.icon}
+              label={item.label}
+              bgColor={item.bgColor}
+            />
+          </div>
         ))}
       </div>
     </div>
