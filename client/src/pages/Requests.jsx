@@ -9,10 +9,11 @@ import BottomNav from '../components/receiver/BottomNav';
 const Requests = () => {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
+  const [receivedRequests, setReceivedRequests] = useState([]);
+  const [sentRequests, setSentRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('received');
-  
-  // ✅ NEW: Modal states
+
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [showEditForm, setShowEditForm] = useState(false);
@@ -26,22 +27,26 @@ const Requests = () => {
     fetchRequests();
   }, [activeTab]);
 
+    useEffect(() => {
+    // Update displayed requests when tab changes
+    setRequests(activeTab === 'received' ? receivedRequests : sentRequests);
+  }, [activeTab, receivedRequests, sentRequests]);
+
+
   const fetchRequests = async () => {
     try {
       setLoading(true);
       const token = await auth.currentUser?.getIdToken();
-      
-      const endpoint = activeTab === 'received' 
-        ? '/donations/interests/received'
-        : '/donations/interests/sent';
 
-      const response = await api.get(endpoint, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const [receivedResponse, sentResponse] = await Promise.all([
+        api.get('/donations/interests/received', { headers: { Authorization: `Bearer ${token}` } }),
+        api.get('/donations/interests/sent', { headers: { Authorization: `Bearer ${token}` } })
+      ]);
 
-      if (response.data.success) {
-        setRequests(response.data.data);
-      }
+      if (receivedResponse.data.success) setReceivedRequests(receivedResponse.data.data);
+      if (sentResponse.data.success) setSentRequests(sentResponse.data.data);
+
+      setRequests(activeTab === 'received' ? receivedResponse.data.data : sentResponse.data.data);
     } catch (error) {
       console.error('Error fetching requests:', error);
     } finally {
@@ -174,7 +179,7 @@ const Requests = () => {
               }}
               onClick={() => setActiveTab('received')}
             >
-              Received ({requests.length})
+              Received ({receivedRequests.length})
             </button>
             <button
               style={{
@@ -183,7 +188,7 @@ const Requests = () => {
               }}
               onClick={() => setActiveTab('sent')}
             >
-              Sent
+              Sent ({sentRequests.length})
             </button>
           </div>
         </div>
