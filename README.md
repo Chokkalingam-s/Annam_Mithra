@@ -158,6 +158,3 @@ R.M.K. Engineering College, Chennai
 
 ### 🧡 Let’s make hunger history — together.
 
-
-## 🧭 Architecture Overview
-
